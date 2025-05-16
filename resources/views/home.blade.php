@@ -2,8 +2,7 @@
 
 @section('content')
 
-  
-</head>
+
 <body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
   <div class="w-full max-w-md">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
