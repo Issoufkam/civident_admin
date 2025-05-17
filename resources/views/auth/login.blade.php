@@ -107,7 +107,7 @@
 
     <p class="text-center mt-6 text-gray-600">
       Pas encore de compte?
-      <a href="index.html" class="text-blue-600 hover:underline transition-all duration-200">
+      <a href="{{ route('register') }}" class="text-blue-600 hover:underline transition-all duration-200">
         S'inscrire
       </a>
     </p>
