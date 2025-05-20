@@ -2,24 +2,34 @@
 
 namespace App\Traits;
 
-use App\Models\Activity;
+use App\Models\ActivityLog;
 
 trait LogsActivity
 {
     public static function bootLogsActivity()
     {
         static::created(function ($model) {
-            Activity::create([
-                'description' => $model->getActivityDescription('created'),
-                'subject_id' => $model->id,
-                'subject_type' => get_class($model),
-                'causer_id' => auth()->id(),
-                'causer_type' => auth()->user() ? get_class(auth()->user()) : null
-            ]);
+            $model->logActivity('created');
         });
 
-        // Ajouter les mêmes pour updated/deleted
+        static::updated(function ($model) {
+            $model->logActivity('updated');
+        });
+
+        static::deleted(function ($model) {
+            $model->logActivity('deleted');
+        });
     }
 
-    abstract protected function getActivityDescription($event);
+    public function logActivity(string $event)
+    {
+        ActivityLog::create([
+            'description' => $this->getActivityDescription($event),
+            'subject_id' => $this->id,
+            'subject_type' => get_class($this),
+            'causer_id' => auth()->id() ?? null,
+        ]);
+    }
+
+    abstract public function getActivityDescription(string $event): string;
 }

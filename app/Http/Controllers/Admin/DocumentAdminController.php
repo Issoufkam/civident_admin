@@ -15,7 +15,7 @@ class DocumentAdminController extends Controller
     public function index(Request $request)
     {
         $documents = Document::with(['user', 'commune', 'agent'])
-            ->when($request->has('status'), fn($q) => $q->where('status', $request->status)) // Remplacement de filled() par has()
+            ->when($request->has('status'), fn($q) => $q->where('status', $request->status))
             ->when($request->has('commune_id'), fn($q) => $q->where('commune_id', $request->commune_id))
             ->latest()
             ->paginate(25);
@@ -38,22 +38,22 @@ class DocumentAdminController extends Controller
 
     public function reject(Request $request, Document $document)
     {
-        $validated = $request->validate([ // Ajout de la validation
+        $validated = $request->validate([
             'comments' => 'required|string|max:500'
         ]);
 
         $document->update([
             'status' => DocumentStatus::REJETEE,
-            'comments' => $validated['comments'] // Utilisation des données validées
+            'comments' => $validated['comments']
         ]);
 
         return back()->with('success', 'Demande rejetée !');
     }
 
-    // Génération PDF
+    
     public function generatePdf(Document $document)
     {
-        $pdf = Pdf::loadView('admin.documents.pdf', compact('document')); // Utilisation correcte du facade
+        $pdf = Pdf::loadView('admin.documents.pdf', compact('document'));
         return $pdf->download("acte-{$document->registry_number}.pdf");
     }
 }

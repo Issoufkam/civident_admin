@@ -2,18 +2,23 @@
 
 namespace App\Enums;
 
+// App\Enums\DocumentType.php
 enum DocumentType: string
 {
     case NAISSANCE = 'naissance';
     case MARIAGE = 'mariage';
     case DECES = 'deces';
 
-    public function label(): string
+    public static function values(): array
     {
-        return match($this) {
-            self::NAISSANCE => 'Acte de Naissance',
-            self::MARIAGE => 'Acte de Mariage',
-            self::DECES => 'Acte de Décès'
-        };
+        return array_column(self::cases(), 'value');
     }
+}
+
+// App\Enums\DocumentStatus.php
+enum DocumentStatus: string
+{
+    case EN_ATTENTE = 'en_attente';
+    case APPROUVEE = 'approuvee';
+    case REJETEE = 'rejetee';
 }

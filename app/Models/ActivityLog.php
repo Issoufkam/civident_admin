@@ -4,9 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Activity extends Model
+class ActivityLog extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'description',
+        'subject_id',
+        'subject_type',
+        'causer_id',
+    ];
 
     public function subject()
     {
@@ -15,6 +20,6 @@ class Activity extends Model
 
     public function causer()
     {
-        return $this->morphTo();
+        return $this->belongsTo(User::class, 'causer_id');
     }
 }
