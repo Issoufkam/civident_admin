@@ -1,73 +1,91 @@
-@extends('layouts.app')
+<?php
 
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Login') }}</div>
+namespace App\Http\Controllers\Auth;
 
-                <div class="card-body">
-                    <form method="POST" action="{{ route('login') }}">
-                        @csrf
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use App\Enums\UserRole;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\Route;
 
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
+class LoginController extends Controller
+{
+    use AuthenticatesUsers;
 
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+    protected $redirectTo = '/';
 
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
+    public function __construct()
+    {
+        $this->middleware('guest')->except('logout');
+    }
 
-                        <div class="row mb-3">
-                            <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>
+    /**
+     * Redirection après connexion selon le rôle utilisateur.
+     * Cette méthode est appelée manuellement dans authenticated().
+     */
+    protected function redirectTo()
+    {
+        if (auth()->user()->role === UserRole::ADMIN) {
+            return '/admin/dashboard';
+        }
 
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
+        if (auth()->user()->role === UserRole::AGENT) {
+            return '/agent/dashboard';
+        }
 
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
+        // Si rôle citoyen, ou autre
+        return '/citoyen/dashboard'; // ou une autre route existante
+    }
 
-                        <div class="row mb-3">
-                            <div class="col-md-6 offset-md-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
 
-                                    <label class="form-check-label" for="remember">
-                                        {{ __('Remember Me') }}
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="row mb-0">
-                            <div class="col-md-8 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Login') }}
-                                </button>
+    /**
+     * URL de redirection pour un admin
+     */
+    private function adminRedirect(): string
+    {
+        return Route::has('admin.dashboard')
+            ? route('admin.dashboard')
+            : '/';
+    }
 
-                                @if (Route::has('password.request'))
-                                    <a class="btn btn-link" href="{{ route('password.request') }}">
-                                        {{ __('Forgot Your Password?') }}
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
+    /**
+     * URL de redirection pour un agent
+     */
+    private function agentRedirect(User $user): string
+    {
+        if (!$user->commune_id) {
+            logger()->warning("Tentative de connexion agent sans commune", ['user' => $user->id]);
+        }
+
+        return Route::has('agent.dashboard')
+            ? route('agent.dashboard')
+            : '/';
+    }
+
+    /**
+     * Gestion post-authentification
+     * Appelée automatiquement par AuthenticatesUsers après login réussi.
+     */
+    protected function authenticated(Request $request, User $user)
+    {
+        // Vérification spécifique pour les agents
+        if ($user->isAgent() && !$user->commune_id) {
+            $this->guard()->logout();
+            return redirect()->route('login')
+                ->withErrors(['commune' => 'Les agents doivent avoir une commune associée']);
+        }
+
+        // Redirection vers l'URL adaptée selon rôle
+        return redirect()->intended($this->redirectTo());
+    }
+
+    /**
+     * La colonne utilisée pour l'authentification (email ici)
+     */
+    public function username()
+    {
+        return 'email';
+    }
+}
