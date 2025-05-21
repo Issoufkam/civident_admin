@@ -135,4 +135,80 @@ class AdminController extends Controller
 
         return view('admin.history', compact('activities'));
     }
+
+
+   public function dashboard()
+{
+    // Utilisateurs
+    $totalUsers = User::count();
+    $totalAdmins = User::where('role', UserRole::ADMIN)->count();
+    $totalAgents = User::where('role', UserRole::AGENT)->count();
+    $totalCitoyens = User::where('role', UserRole::CITOYEN)->count();
+
+    // Statistiques temporelles - mois courant vs mois précédent
+    $currentMonth = now()->startOfMonth();
+    $previousMonth = now()->subMonth()->startOfMonth();
+
+    $agentsThisMonth = User::where('role', UserRole::AGENT)
+        ->where('created_at', '>=', $currentMonth)
+        ->count();
+
+    $agentsLastMonth = User::where('role', UserRole::AGENT)
+        ->whereBetween('created_at', [$previousMonth, $currentMonth])
+        ->count();
+
+    $agentChange = $agentsLastMonth > 0
+        ? round((($agentsThisMonth - $agentsLastMonth) / $agentsLastMonth) * 100)
+        : ($agentsThisMonth > 0 ? 100 : 0);
+
+    $agentProgress = $totalAgents > 0
+        ? round(($agentsThisMonth / $totalAgents) * 100)
+        : 0;
+
+    // Documents
+    $totalRequests = Document::count();
+
+    $requestsThisMonth = Document::where('created_at', '>=', $currentMonth)->count();
+    $requestsLastMonth = Document::whereBetween('created_at', [$previousMonth, $currentMonth])->count();
+
+    $requestChange = $requestsLastMonth > 0
+        ? round((($requestsThisMonth - $requestsLastMonth) / $requestsLastMonth) * 100)
+        : ($requestsThisMonth > 0 ? 100 : 0);
+
+    $requestProgress = $totalRequests > 0
+        ? round(($requestsThisMonth / $totalRequests) * 100)
+        : 0;
+
+    // Couverture régionale
+    $activeRegions = Commune::whereHas('users')->distinct('region')->count();
+    $totalRegions = Commune::distinct('region')->count();
+
+    $regionCoverage = $totalRegions > 0
+        ? round(($activeRegions / $totalRegions) * 100)
+        : 0;
+
+    $stats = [
+        'total_agents' => $totalAgents,
+        'agent_progress' => $agentProgress,
+        'agent_change' => $agentChange,
+
+        'total_requests' => $totalRequests,
+        'request_progress' => $requestProgress,
+        'request_change' => $requestChange,
+
+        'active_regions' => $activeRegions,
+        'region_coverage' => $regionCoverage,
+    ];
+
+    return view('admin.dashboard', compact(
+        'totalUsers',
+        'totalAdmins',
+        'totalAgents',
+        'totalCitoyens',
+        'stats'
+    ));
+}
+
+
+
 }

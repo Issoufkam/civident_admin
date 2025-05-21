@@ -20,8 +20,8 @@ class UserSeeder extends Seeder
             'prenom' => 'Admin',
             'telephone' => '0123456789',
             'email' => 'admin@example.com',
-            'password' => Hash::make('password'), // Tu peux changer ce mot de passe
-            'role' => UserRole::ADMIN, // ✅ Compatible avec ton enum
+            'password' => Hash::make('password'),
+            'role' => UserRole::ADMIN, 
         ]);
 
         // Exemple : Création d'un agent

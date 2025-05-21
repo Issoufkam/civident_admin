@@ -50,7 +50,7 @@ class DocumentAdminController extends Controller
         return back()->with('success', 'Demande rejetée !');
     }
 
-    
+
     public function generatePdf(Document $document)
     {
         $pdf = Pdf::loadView('admin.documents.pdf', compact('document'));

@@ -25,8 +25,9 @@ class HomeController extends Controller
     public function index()
     {
         $user = auth()->user();
+        $role = UserRole::from($user->role); // Convertit la chaîne en enum
 
-        return match($user->role) {
+        return match($role) {
             UserRole::ADMIN => redirect()->route('admin.dashboard'),
             UserRole::AGENT => redirect()->route('agent.dashboard'),
             default => $this->handleDefaultRedirect($user)

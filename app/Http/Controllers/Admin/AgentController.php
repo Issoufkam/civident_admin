@@ -35,7 +35,7 @@ class AgentController extends Controller
     {
         $this->authorize('create', User::class);
 
-        return view('admin.agents.create', [
+        return view('agents.create', [
             'commune' => Commune::findOrFail(auth()->user()->commune_id)
         ]);
     }
@@ -71,7 +71,7 @@ class AgentController extends Controller
             ->orderByDesc('created_at')
             ->paginate(15);
 
-        return view('admin.agents.documents', [
+        return view('agents.documents', [
             'documents' => $documents,
             'statuses' => DocumentStatus::cases()
         ]);
@@ -81,7 +81,7 @@ class AgentController extends Controller
     {
         Gate::authorize('view-document', $document);
 
-        return view('admin.agents.traiter-document', [
+        return view('agents.traiter-document', [
             'document' => $document->load('piecesJointes')
         ]);
     }
@@ -122,7 +122,7 @@ class AgentController extends Controller
     {
         Gate::authorize('view-document', $document);
 
-        $pdf = Pdf::loadView('admin.agents.document-pdf', [
+        $pdf = Pdf::loadView('agents.document-pdf', [
             'document' => $document->load('citoyen', 'piecesJointes')
         ]);
 
@@ -137,4 +137,24 @@ class AgentController extends Controller
 
         return back()->with('success', 'Agent supprimé définitivement');
     }
+
+    public function dashboard()
+    {
+        return view('agent.dashboard');
+    }
+
+    public function regions()
+    {
+        $regions = Commune::select('region')->distinct()->get(); // Ou un modèle `Region` si tu en as un
+
+        return view('agents.regions', compact('regions'));
+    }
+
+    public function communesByRegion($region)
+    {
+        $communes = Commune::where('region', $region)->get();
+
+        return response()->json($communes);
+    }
+
 }
