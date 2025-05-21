@@ -13,7 +13,10 @@ return new class extends Migration
     {
         Schema::create('communes', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->string('name')->nullable();
+            $table->string('code')->nullable();
+            $table->string('region')->nullable();
+            $table->timestamps(); // Bonne pratique pour ajouter les colonnes created_at / updated_at
         });
     }
 

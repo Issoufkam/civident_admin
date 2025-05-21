@@ -43,4 +43,13 @@ class CommuneAdminController extends Controller
         $commune->delete();
         return back()->with('success', 'Commune supprimée !');
     }
+
+    public function regionsIndex()
+    {
+        // Récupérer toutes les régions distinctes
+        $regions = Commune::select('region')->distinct()->paginate(20);
+
+        return view('admin.regions.index', compact('regions'));
+    }
+
 }

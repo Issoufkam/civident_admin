@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->enum('role', ['citoyen', 'agent', 'admin'])->default('citoyen');
             $table->foreignId('commune_id')->nullable()->constrained('communes');
+            $table->string('photo')->nullable();
+            $table->string('adresse')->nullable();
             $table->string('password');
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();

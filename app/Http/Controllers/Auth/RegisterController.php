@@ -7,45 +7,19 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Register Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles the registration of new users as well as their
-    | validation and creation. By default this controller uses a trait to
-    | provide this functionality without requiring any additional code.
-    |
-    */
-
     use RegistersUsers;
 
-    /**
-     * Where to redirect users after registration.
-     *
-     * @var string
-     */
     protected $redirectTo = '/home';
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('guest');
     }
 
-    /**
-     * Get a validator for an incoming registration request.
-     *
-     * @param  array  $data
-     * @return \Illuminate\Contracts\Validation\Validator
-     */
     protected function validator(array $data)
     {
         return Validator::make($data, [
@@ -53,6 +27,10 @@ class RegisterController extends Controller
             'prenom' => ['required', 'string', 'max:50'],
             'telephone' => ['required', 'string', 'max:15', 'unique:users','min:10'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'adresse' => ['nullable', 'string', 'max:255'],
+            'commune_id' => ['nullable', 'exists:communes,id'],
+            'role' => ['required', 'string', 'in:citoyen,agent,admin'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:7048'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
     }
@@ -65,14 +43,24 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        // Gérer le téléchargement de la photo
+        $photoPath = null;
+
+        if (request()->hasFile('photo')) {
+            $photo = request()->file('photo');
+            $photoPath = $photo->store('profiles', 'public');
+        }
+
         return User::create([
             'nom' => $data['nom'],
             'prenom' => $data['prenom'],
             'telephone' => $data['telephone'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => User::ROLE_CITOYEN,
-
+            'photo' => $photoPath,
+            'adresse' => $data['adresse'] ?? null,
+            'commune_id' => $data['commune_id'] ?? null,
+            'role' => $data['role'],
         ]);
     }
 }

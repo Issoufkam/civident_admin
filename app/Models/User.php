@@ -11,9 +11,8 @@ class User extends Authenticatable
 {
     use Notifiable, LogsActivity;
 
-    // public const ROLE_CITOYEN = 'citoyen';
-    // public const ROLE_AGENT = 'agent';
-    // public const ROLE_ADMIN = 'admin';
+    const ROLE_AGENT = 'agent';
+    const ROLE_ADMIN = 'admin';
 
     protected $fillable = [
         'nom',
@@ -21,15 +20,24 @@ class User extends Authenticatable
         'telephone',
         'email',
         'password',
+        'photo',
+        'adresse',
+        'commune_id',
         'role',
-        'commune_id'
     ];
-
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
+
+    // ✅ Accessor pour l’URL de la photo
+    public function getPhotoUrlAttribute()
+    {
+        return $this->photo
+            ? asset('storage/' . $this->photo)
+            : asset('images/default-profile.png');
+    }
 
     // Méthodes de vérification de rôle
     public function isAdmin(): bool
@@ -46,7 +54,6 @@ class User extends Authenticatable
     {
         return $this->role === UserRole::CITOYEN;
     }
-
 
     // Relation avec commune (si nécessaire)
     public function commune()
@@ -73,14 +80,13 @@ class User extends Authenticatable
         ];
     }
 
-    // app/Models/User.php
-public function roleDashboard()
-{
-    return match($this->role) {
-        UserRole::ADMIN => route('admin.dashboard'),
-        UserRole::AGENT => route('agent.dashboard'),
-        UserRole::CITOYEN => route('citoyen.dashboard'),
-        default => throw new \Exception('Rôle utilisateur non reconnu')
-    };
-}
+    public function roleDashboard()
+    {
+        return match($this->role) {
+            UserRole::ADMIN => route('admin.dashboard'),
+            UserRole::AGENT => route('agent.dashboard'),
+            UserRole::CITOYEN => route('citoyen.dashboard'),
+            default => throw new \Exception('Rôle utilisateur non reconnu')
+        };
+    }
 }

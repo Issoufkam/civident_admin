@@ -23,7 +23,7 @@ class DocumentController extends Controller
         return view('admin.dashboard');
      }
 
-     
+
     public function index(Request $request)
     {
         $user = auth()->user();
