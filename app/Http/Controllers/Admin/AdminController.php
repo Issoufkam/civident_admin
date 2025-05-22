@@ -137,77 +137,145 @@ class AdminController extends Controller
     }
 
 
-   public function dashboard()
-{
-    // Utilisateurs
-    $totalUsers = User::count();
-    $totalAdmins = User::where('role', UserRole::ADMIN)->count();
-    $totalAgents = User::where('role', UserRole::AGENT)->count();
-    $totalCitoyens = User::where('role', UserRole::CITOYEN)->count();
+    public function dashboard()
+    {
+        // Utilisateurs
+        $totalUsers = User::count();
+        $totalAdmins = User::where('role', UserRole::ADMIN)->count();
+        $totalAgents = User::where('role', UserRole::AGENT)->count();
+        $totalCitoyens = User::where('role', UserRole::CITOYEN)->count();
 
-    // Statistiques temporelles - mois courant vs mois précédent
-    $currentMonth = now()->startOfMonth();
-    $previousMonth = now()->subMonth()->startOfMonth();
+        // Dates
+        $currentMonth = now()->startOfMonth();
+        $previousMonth = now()->subMonth()->startOfMonth();
 
-    $agentsThisMonth = User::where('role', UserRole::AGENT)
-        ->where('created_at', '>=', $currentMonth)
-        ->count();
+        // Agents
+        $agentsThisMonth = User::where('role', UserRole::AGENT)
+            ->where('created_at', '>=', $currentMonth)
+            ->count();
 
-    $agentsLastMonth = User::where('role', UserRole::AGENT)
-        ->whereBetween('created_at', [$previousMonth, $currentMonth])
-        ->count();
+        $agentsLastMonth = User::where('role', UserRole::AGENT)
+            ->whereBetween('created_at', [$previousMonth, $currentMonth])
+            ->count();
 
-    $agentChange = $agentsLastMonth > 0
-        ? round((($agentsThisMonth - $agentsLastMonth) / $agentsLastMonth) * 100)
-        : ($agentsThisMonth > 0 ? 100 : 0);
+        $agentChange = $agentsLastMonth > 0
+            ? round((($agentsThisMonth - $agentsLastMonth) / $agentsLastMonth) * 100)
+            : ($agentsThisMonth > 0 ? 100 : 0);
 
-    $agentProgress = $totalAgents > 0
-        ? round(($agentsThisMonth / $totalAgents) * 100)
-        : 0;
+        $agentProgress = $totalAgents > 0
+            ? round(($agentsThisMonth / $totalAgents) * 100)
+            : 0;
 
-    // Documents
-    $totalRequests = Document::count();
+        // Citoyens
+        $citoyensThisMonth = User::where('role', UserRole::CITOYEN)
+            ->where('created_at', '>=', $currentMonth)
+            ->count();
 
-    $requestsThisMonth = Document::where('created_at', '>=', $currentMonth)->count();
-    $requestsLastMonth = Document::whereBetween('created_at', [$previousMonth, $currentMonth])->count();
+        $citoyenProgress = $totalCitoyens > 0
+            ? round(($citoyensThisMonth / $totalCitoyens) * 100)
+            : 0;
 
-    $requestChange = $requestsLastMonth > 0
-        ? round((($requestsThisMonth - $requestsLastMonth) / $requestsLastMonth) * 100)
-        : ($requestsThisMonth > 0 ? 100 : 0);
+        // Documents
+        $totalRequests = Document::count();
 
-    $requestProgress = $totalRequests > 0
-        ? round(($requestsThisMonth / $totalRequests) * 100)
-        : 0;
+        $requestsThisMonth = Document::where('created_at', '>=', $currentMonth)->count();
+        $requestsLastMonth = Document::whereBetween('created_at', [$previousMonth, $currentMonth])->count();
 
-    // Couverture régionale
-    $activeRegions = Commune::whereHas('users')->distinct('region')->count();
-    $totalRegions = Commune::distinct('region')->count();
+        $requestChange = $requestsLastMonth > 0
+            ? round((($requestsThisMonth - $requestsLastMonth) / $requestsLastMonth) * 100)
+            : ($requestsThisMonth > 0 ? 100 : 0);
 
-    $regionCoverage = $totalRegions > 0
-        ? round(($activeRegions / $totalRegions) * 100)
-        : 0;
+        $requestProgress = $totalRequests > 0
+            ? round(($requestsThisMonth / $totalRequests) * 100)
+            : 0;
 
-    $stats = [
-        'total_agents' => $totalAgents,
-        'agent_progress' => $agentProgress,
-        'agent_change' => $agentChange,
+        // Régions
+        $totalRegions = Commune::whereNotNull('region')->distinct('region')->count();
 
-        'total_requests' => $totalRequests,
-        'request_progress' => $requestProgress,
-        'request_change' => $requestChange,
+        $activeRegions = Commune::whereNotNull('region')
+            ->whereHas('users') // relation users définie sur Commune
+            ->distinct('region')
+            ->count();
 
-        'active_regions' => $activeRegions,
-        'region_coverage' => $regionCoverage,
-    ];
+        $regionCoverage = $totalRegions > 0
+            ? round(($activeRegions / $totalRegions) * 100)
+            : 0;
 
-    return view('admin.dashboard', compact(
-        'totalUsers',
-        'totalAdmins',
-        'totalAgents',
-        'totalCitoyens',
-        'stats'
-    ));
-}
+        // ➤ Performance par région
+        $regionsPerformance = Commune::whereNotNull('region')
+            ->select('region')
+            ->distinct()
+            ->get()
+            ->map(function ($commune) {
+                $regionName = $commune->region;
+
+                $agents = User::where('role', UserRole::AGENT)
+                    ->whereHas('commune', function ($q) use ($regionName) {
+                        $q->where('region', $regionName);
+                    })
+                    ->count();
+
+                $demandes = Document::whereHas('user.commune', function ($q) use ($regionName) {
+                    $q->where('region', $regionName);
+                })->count();
+
+                $rate = $agents > 0 ? round(min(100, ($demandes / $agents))) : 0;
+
+                return [
+                    'name' => $regionName,
+                    'agents' => $agents,
+                    'demandes' => $demandes,
+                    'rate' => $rate,
+                ];
+            });
+
+        //  Derniers agents
+        $latestAgents = User::with('commune')
+            ->where('role', UserRole::AGENT)
+            ->latest()
+            ->take(5)
+            ->get(['id', 'nom', 'prenom', 'commune_id']); // en tenant compte des colonnes réelles
+
+        // ➤ Cartes dynamiques
+        $cards = [
+            [
+                'label' => 'Agents enregistrés',
+                'value' => $totalAgents,
+                'trend' => "+$agentProgress% ce mois",
+                'color' => 'primary',
+            ],
+            [
+                'label' => 'Citoyens enregistrés',
+                'value' => $totalCitoyens,
+                'trend' => "+$citoyenProgress% ce mois",
+                'color' => 'success',
+            ],
+            [
+                'label' => 'Documents déposés',
+                'value' => $totalRequests,
+                'trend' => $requestChange >= 0 ? "+$requestChange% ce mois" : "$requestChange% ce mois",
+                'color' => 'warning',
+            ],
+            [
+                'label' => 'Régions actives',
+                'value' => $activeRegions,
+                'trend' => "Couverture à $regionCoverage%",
+                'color' => 'secondary',
+            ]
+        ];
+
+        return view('admin.dashboard', compact(
+            'totalUsers',
+            'totalAdmins',
+            'cards',
+            'regionsPerformance',
+            'latestAgents'
+        ));
+    }
+
+
+
+
 
 
 

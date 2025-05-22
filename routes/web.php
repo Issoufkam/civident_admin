@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\CommuneAdminController;
 
 use App\Http\Controllers\DocumentController;
+use App\Models\Commune;
 
 Auth::routes();
 
@@ -52,11 +53,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Gestion des régions
     Route::prefix('regions')->group(function () {
         Route::get('/', [CommuneAdminController::class, 'regionsIndex'])->name('regions.index');
-        Route::get('/create', [AdminController::class, 'createRegion'])->name('regions.create');
-        Route::post('/', [AdminController::class, 'storeRegion'])->name('regions.store');
-        Route::get('/{region}/edit', [AdminController::class, 'editRegion'])->name('regions.edit');
-        Route::put('/{region}', [AdminController::class, 'updateRegion'])->name('regions.update');
-        Route::delete('/{region}', [AdminController::class, 'deleteRegion'])->name('regions.delete');
+        Route::get('/create', [CommuneAdminController::class, 'createRegion'])->name('regions.create');
+        Route::post('/', [CommuneAdminController::class, 'regionStore'])->name('regions.store');
+        Route::get('/{region}/edit', [CommuneAdminController::class, 'regionEdit'])->name('regions.edit');
+        Route::put('/', [CommuneAdminController::class, 'regionUpdate'])->name('regions.update');
+        Route::delete('/regions', [CommuneAdminController::class, 'regionDestroy'])->name('regions.destroy');
     });
 });
 
