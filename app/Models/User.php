@@ -42,17 +42,17 @@ class User extends Authenticatable
     // Méthodes de vérification de rôle
     public function isAdmin(): bool
     {
-        return $this->role === UserRole::ADMIN;
+        return $this->role === UserRole::ADMIN->value;
     }
 
     public function isAgent(): bool
     {
-        return $this->role === UserRole::AGENT;
+        return $this->role === UserRole::AGENT->value;
     }
 
     public function isCitoyen(): bool
     {
-        return $this->role === UserRole::CITOYEN;
+        return $this->role === UserRole::CITOYEN->value;
     }
 
     // Relation avec commune (si nécessaire)

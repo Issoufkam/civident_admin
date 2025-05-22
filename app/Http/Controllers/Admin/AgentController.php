@@ -33,6 +33,8 @@ class AgentController extends Controller
 
     public function create()
     {
+        // dd(auth()->user()->role, auth()->user()->isAdmin());
+
         $this->authorize('create', User::class);
 
         return view('agents.create', [

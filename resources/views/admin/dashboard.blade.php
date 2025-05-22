@@ -12,28 +12,26 @@
     </div>
 
     <!-- Statistiques Globales -->
-    <div class="row stats-row mb-4">
-        @php
-            $stats = [
-                ['label' => 'Total Agents', 'value' => 1250, 'trend' => '↑ 12%', 'color' => 'success'],
-                ['label' => 'Demandes Totales', 'value' => 9875, 'trend' => '↑ 8%', 'color' => 'success'],
-                ['label' => 'Régions Actives', 'value' => 12, 'trend' => 'Couverture nationale', 'color' => 'secondary'],
-                ['label' => 'Taux de Traitement', 'value' => '82%', 'trend' => '↑ 3%', 'color' => 'success'],
-            ];
-        @endphp
-
-        @foreach ($stats as $stat)
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm">
+<div class="row stats-row mb-4">
+    @foreach ($cards as $stat)
+        <div class="col-md-3">
+            <div class="card border-left-{{ $stat['color'] }} shadow h-100 py-2">
                 <div class="card-body">
-                    <h6 class="text-muted">{{ $stat['label'] }}</h6>
-                    <h3>{{ $stat['value'] }}</h3>
-                    <p class="text-{{ $stat['color'] }}">{{ $stat['trend'] }}</p>
+                    <div class="text-xs font-weight-bold text-{{ $stat['color'] }} text-uppercase mb-1">
+                        {{ $stat['label'] }}
+                    </div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                        {{ $stat['value'] }}
+                    </div>
+                    <div class="mt-2 text-muted small">
+                        {{ $stat['trend'] }}
+                    </div>
                 </div>
             </div>
         </div>
-        @endforeach
-    </div>
+    @endforeach
+</div>
+
 
     <!-- Tableau + Agents -->
     <div class="row">
@@ -56,30 +54,23 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @php
-                                    $regions = [
-                                        ['name' => 'Abidjan', 'agents' => 350, 'demandes' => 3000, 'rate' => 90],
-                                        ['name' => 'Bouaké', 'agents' => 200, 'demandes' => 1800, 'rate' => 65],
-                                        ['name' => 'San-Pedro', 'agents' => 120, 'demandes' => 900, 'rate' => 45],
-                                    ];
-                                @endphp
-                                @foreach ($regions as $region)
-                                @php
-                                    $badge = $region['rate'] >= 80 ? 'success' : ($region['rate'] >= 60 ? 'warning' : 'danger');
-                                    $label = $region['rate'] >= 80 ? 'Excellente' : ($region['rate'] >= 60 ? 'Moyenne' : 'Faible');
-                                @endphp
-                                <tr>
-                                    <td><i class="bi bi-geo-alt text-primary me-2"></i> {{ $region['name'] }}</td>
-                                    <td>{{ $region['agents'] }}</td>
-                                    <td>{{ number_format($region['demandes'], 0, ',', ' ') }}</td>
-                                    <td>
-                                        <div class="progress" style="height: 5px; width: 100px;">
-                                            <div class="progress-bar bg-{{ $badge }}" style="width: {{ $region['rate'] }}%"></div>
-                                        </div>
-                                        <span class="small">{{ $region['rate'] }}%</span>
-                                    </td>
-                                    <td><span class="badge bg-{{ $badge }}">{{ $label }}</span></td>
-                                </tr>
+                                @foreach ($regionsPerformance as $region)
+                                    @php
+                                        $badge = $region['rate'] >= 80 ? 'success' : ($region['rate'] >= 60 ? 'warning' : 'danger');
+                                        $label = $region['rate'] >= 80 ? 'Excellente' : ($region['rate'] >= 60 ? 'Moyenne' : 'Faible');
+                                    @endphp
+                                    <tr>
+                                        <td><i class="bi bi-geo-alt text-primary me-2"></i> {{ $region['name'] }}</td>
+                                        <td>{{ $region['agents'] }}</td>
+                                        <td>{{ number_format($region['demandes'], 0, ',', ' ') }}</td>
+                                        <td>
+                                            <div class="progress" style="height: 5px; width: 100px;">
+                                                <div class="progress-bar bg-{{ $badge }}" style="width: {{ $region['rate'] }}%"></div>
+                                            </div>
+                                            <span class="small">{{ $region['rate'] }}%</span>
+                                        </td>
+                                        <td><span class="badge bg-{{ $badge }}">{{ $label }}</span></td>
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
