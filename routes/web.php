@@ -37,6 +37,21 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Statistiques globales
     Route::get('/statistics', [AdminController::class, 'showStatistics'])->name('statistics');
 
+    // paramètres 
+    Route::get('/Settings', [AdminController::class, 'showSettings'])->name('settings');
+
+    // recherche
+        Route::get('/Search', [AdminController::class, 'showSearch'])->name('search');
+
+    // notifications
+     Route::get('/Notifications', [AdminController::class, 'showNotifications'])->name('notifications');
+    
+    //sidebar
+    Route::get('/ToggleSidebar', [AdminController::class, 'showToggleSidebar'])->name('togglesidebar');
+
+    
+
+
     // Historique des actions
     Route::get('/history', [AdminController::class, 'viewHistory'])->name('history');
 
