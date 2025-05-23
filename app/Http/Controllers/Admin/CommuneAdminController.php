@@ -28,6 +28,17 @@ class CommuneAdminController extends Controller
         return back()->with('success', 'Commune créée !');
     }
 
+    public function create()
+    {
+        return view('admin.communes.create');
+    }
+
+    // Modification de commune
+    public function edit(Commune $commune)
+    {
+        return view('admin.communes.edit', compact('commune'));
+    }
+
     public function update(Request $request, Commune $commune)
     {
         $request->validate([

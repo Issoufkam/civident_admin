@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class AgentController extends Controller
 {
+    // Liste des agents de la commune de l'utilisateur connecté
     public function index(Request $request)
     {
         $communeId = auth()->user()->commune_id;
@@ -22,8 +23,8 @@ class AgentController extends Controller
             ->with('commune')
             ->when($request->has('search'), function($query) use ($request) {
                 $query->where(function($q) use ($request) {
-                    $q->where('nom', 'LIKE', '%'.$request->search.'%')
-                      ->orWhere('prenom', 'LIKE', '%'.$request->search.'%');
+                    $q->where('nom', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('prenom', 'LIKE', '%' . $request->search . '%');
                 });
             })
             ->paginate(10);
@@ -31,13 +32,11 @@ class AgentController extends Controller
         return view('admin.agents.index', compact('agents'));
     }
 
-    public function create()
+    public function createUser()
     {
-        // dd(auth()->user()->role, auth()->user()->isAdmin());
-
         $this->authorize('create', User::class);
 
-        return view('agents.create', [
+        return view('admin.agents.create', [
             'commune' => Commune::findOrFail(auth()->user()->commune_id)
         ]);
     }
@@ -61,10 +60,51 @@ class AgentController extends Controller
             'password' => bcrypt($validated['password'])
         ]);
 
-        return redirect()->route('agent.agents.index')
+        return redirect()->route('admin.agents.index')
              ->with('success', 'Nouvel agent créé avec succès');
     }
 
+    public function showAgent($id)
+    {
+        $agent = User::findOrFail($id);
+
+        return view('admin.agents.show', compact('agent'));
+    }
+
+    public function updateAgent($id)
+    {
+        $agent = User::findOrFail($id);
+        $communes = Commune::all();
+
+        return view('admin.agents.edit', compact('agent', 'communes'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $agent = User::findOrFail($id);
+
+        $this->authorize('update', $agent);
+
+        $validated = $request->validate([
+            'nom' => 'required|string|max:25',
+            'prenom' => 'required|string|max:50',
+            'email' => "required|email|unique:users,email,$id",
+            'telephone' => "required|string|max:15|unique:users,telephone,$id",
+            'commune_id' => 'required|exists:communes,id',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:7048'
+        ]);
+
+        if ($request->hasFile('photo')) {
+            $validated['photo'] = $request->file('photo')->store('profiles', 'public');
+        }
+
+        $agent->update($validated);
+
+        return redirect()->route('admin.agents.index')
+            ->with('success', 'Agent mis à jour avec succès');
+    }
+
+    // Affiche tous les documents de la commune
     public function documents(Request $request)
     {
         $documents = Document::where('commune_id', auth()->user()->commune_id)
@@ -147,7 +187,7 @@ class AgentController extends Controller
 
     public function regions()
     {
-        $regions = Commune::select('region')->distinct()->get(); // Ou un modèle `Region` si tu en as un
+        $regions = Commune::select('region')->distinct()->get();
 
         return view('agents.regions', compact('regions'));
     }
@@ -158,5 +198,4 @@ class AgentController extends Controller
 
         return response()->json($communes);
     }
-
 }

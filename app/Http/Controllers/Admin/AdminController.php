@@ -140,6 +140,7 @@ class AdminController extends Controller
     public function dashboard()
     {
         // Utilisateurs
+        $agents = User::paginate(5);
         $totalUsers = User::count();
         $totalAdmins = User::where('role', UserRole::ADMIN)->count();
         $totalAgents = User::where('role', UserRole::AGENT)->count();
@@ -269,8 +270,10 @@ class AdminController extends Controller
             'totalAdmins',
             'cards',
             'regionsPerformance',
-            'latestAgents'
+            'latestAgents',
+            'agents'
         ));
+
     }
 
 
