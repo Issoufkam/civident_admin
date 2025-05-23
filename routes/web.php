@@ -25,17 +25,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     // Gestion des utilisateurs (agents)
-    Route::prefix('agents')->name('agents.')->group(function () {
-        Route::get('/', [AgentController::class, 'index'])->name('index');
-        Route::get('/create', [AgentController::class, 'createUser'])->name('create');
-        Route::post('/', [AgentController::class, 'store'])->name('store');
-
-        Route::get('/{agent}/edit', [AgentController::class, 'updateAgent'])->name('edit');
-        Route::put('/{agent}', [AgentController::class, 'update'])->name('update');
-
-        Route::get('/{agent}', [AgentController::class, 'showAgent'])->name('show');
-        Route::delete('/{agent}', [AgentController::class, 'destroy'])->name('delete');
-    });
+        Route::prefix('agents')->name('agents.')->group(function () {
+            Route::get('/', [AgentController::class, 'index'])->name('index');
+            Route::get('create', [AgentController::class, 'create'])->name('create');
+            Route::post('/', [AgentController::class, 'store'])->name('store');
+            Route::get('{id}', [AgentController::class, 'show'])->name('show');
+            Route::get('{id}/edit', [AgentController::class, 'edit'])->name('edit');
+            Route::put('{id}', [AgentController::class, 'update'])->name('update');
+            Route::delete('{agent}', [AgentController::class, 'destroy'])->name('destroy');
+        });
 
     // Statistiques globales
     Route::get('/statistics', [AdminController::class, 'showStatistics'])->name('statistics');

@@ -1,0 +1,160 @@
+<!-- Templates for different views -->
+  <template id="dashboard-template">
+
+  </template>
+
+  <template id="request-details-template">
+    <div class="row">
+      <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#" id="back-to-dashboard">Tableau de Bord</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Détails de la Demande</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Informations de la Demande</h5>
+            <span class="badge status-badge">En Attente</span>
+          </div>
+          <div class="card-body">
+            <div class="row request-info">
+              <!-- Request info will be injected here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">Documents Fournis</h5>
+          </div>
+          <div class="card-body">
+            <div class="row documents-list">
+              <!-- Documents will be injected here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">Historique de la Demande</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Action</th>
+                    <th>Agent</th>
+                    <th>Commentaire</th>
+                  </tr>
+                </thead>
+                <tbody class="request-history">
+                  <!-- History will be injected here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4 sticky-top" style="top: 20px;">
+          <div class="card-header bg-white border-0">
+            <h5 class="card-title mb-0">Actions</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2 mb-4">
+              <button type="button" class="btn btn-success btn-approve" data-bs-toggle="modal" data-bs-target="#approveModal">
+                <i class="bi bi-check-circle"></i> Approuver la demande
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                <i class="bi bi-x-circle"></i> Rejeter la demande
+              </button>
+            </div>
+            <div class="mb-3">
+              <label for="requestNotes" class="form-label">Notes internes</label>
+              <textarea class="form-control" id="requestNotes" rows="4" placeholder="Ajouter des notes concernant cette demande..."></textarea>
+            </div>
+            <div class="d-grid">
+              <button type="button" class="btn btn-primary btn-save-notes">
+                <i class="bi bi-save"></i> Enregistrer les notes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approve Modal -->
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="approveModalLabel">Approuver la Demande</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="approveComment" class="form-label">Commentaire (optionnel)</label>
+              <textarea class="form-control" id="approveComment" rows="3" placeholder="Ajouter un commentaire pour le citoyen..."></textarea>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="sendNotificationApprove" checked>
+              <label class="form-check-label" for="sendNotificationApprove">
+                Notifier le citoyen par email
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-success btn-confirm-approve" data-bs-dismiss="modal">Confirmer l'approbation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="rejectModalLabel">Rejeter la Demande</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="rejectReason" class="form-label">Motif du rejet <span class="text-danger">*</span></label>
+              <select class="form-select mb-3" id="rejectReason" required>
+                <option value="" selected disabled>Sélectionnez un motif</option>
+                <option value="documents_incomplets">Documents incomplets</option>
+                <option value="informations_incorrectes">Informations incorrectes</option>
+                <option value="documents_illisibles">Documents illisibles</option>
+                <option value="demande_doublon">Demande en doublon</option>
+                <option value="autre">Autre</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="rejectComment" class="form-label">Commentaire détaillé <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="rejectComment" rows="3" placeholder="Expliquez la raison du rejet..." required></textarea>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="sendNotificationReject" checked>
+              <label class="form-check-label" for="sendNotificationReject">
+                Notifier le citoyen par email
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-danger btn-confirm-reject" data-bs-dismiss="modal">Confirmer le rejet</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>

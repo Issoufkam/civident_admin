@@ -16,9 +16,24 @@
     @endif
 
     {{-- Formulaire de modification --}}
-    <form action="{{ route('admin.agents.update', $agent->id) }}" method="POST">
+    <form action="{{ route('admin.agents.update', $agent->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
+
+        {{-- Affichage de la photo actuelle --}}
+        @if ($agent->photo)
+            <div class="mb-3">
+                <label class="form-label">Photo actuelle</label><br>
+                <img src="{{ asset('storage/' . $agent->photo) }}" alt="Photo actuelle" class="img-thumbnail" width="150">
+            </div>
+        @endif
+
+        {{-- Champ de modification de la photo --}}
+        <div class="mb-3">
+            <label for="photo" class="form-label">Changer la photo</label>
+            <input type="file" name="photo" id="photo" class="form-control">
+            <small class="form-text text-muted">Laissez vide si vous ne souhaitez pas modifier la photo.</small>
+        </div>
 
         <div class="mb-3">
             <label for="nom" class="form-label">Nom</label>
@@ -46,7 +61,7 @@
                 <option value="">-- Sélectionnez une commune --</option>
                 @foreach ($communes as $commune)
                     <option value="{{ $commune->id }}" {{ $agent->commune_id == $commune->id ? 'selected' : '' }}>
-                        {{ $commune->nom }}
+                        {{ $commune->name }}
                     </option>
                 @endforeach
             </select>
@@ -59,6 +74,14 @@
                 <option value="admin" {{ $agent->role == 'admin' ? 'selected' : '' }}>Administrateur</option>
                 <option value="superadmin" {{ $agent->role == 'superadmin' ? 'selected' : '' }}>Super Admin</option>
             </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Mot de passe</label>
+            <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" required>
+            @error('password')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
 
         <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>

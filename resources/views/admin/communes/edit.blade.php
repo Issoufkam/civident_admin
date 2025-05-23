@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    <h2>Créer une nouvelle commune</h2>
+    <h2>Modification de la commune</h2>
 
     @if ($errors->any())
         <div class="alert alert-danger">
@@ -20,32 +20,26 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.communes.store') }}" method="POST">
+    <form action="{{ route('admin.communes.update', $commune->id) }}" method="POST">
         @csrf
+        @method('PUT')
 
         <div class="mb-3">
             <label for="name" class="form-label">Nom de la commune</label>
-            <input type="text" name="name" id="name" class="form-control" required value="{{ old('name') }}">
+            <input type="text" name="name" id="name" class="form-control" required value="{{ old('name', $commune->name) }}">
         </div>
 
         <div class="mb-3">
             <label for="code" class="form-label">Code de la commune</label>
-            <input type="text" name="code" id="code" class="form-control" required maxlength="10" value="{{ old('code') }}">
+            <input type="text" name="code" id="code" class="form-control" required maxlength="10" value="{{ old('code', $commune->code) }}">
         </div>
 
         <div class="mb-3">
             <label for="region" class="form-label">Région</label>
-            <select name="region" id="region" class="form-select" required>
-                <option value="">-- Sélectionner une région --</option>
-                @foreach ($regions as $region)
-                    <option value="{{ $region }}" {{ old('region') == $region ? 'selected' : '' }}>
-                        {{ $region }}
-                    </option>
-                @endforeach
-            </select>
+            <input type="text" name="region" id="region" class="form-control" required value="{{ old('region', $commune->region) }}">
         </div>
 
-        <button type="submit" class="btn btn-primary">Créer</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
         <a href="{{ route('admin.communes.index') }}" class="btn btn-secondary">Annuler</a>
     </form>
 </div>

@@ -420,73 +420,70 @@ body {
 </head>
 <body>
 
-    <div class="wrapper">
-        <!-- Sidebar -->
-        <nav id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <h3>Administration</h3>
-                <div class="sidebar-brand-icon">
-                    <i class="bi bi-shield-lock"></i>
-                </div>
+<div class="wrapper">
+    @php
+        $user = Auth::user();
+    @endphp
+
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h3>{{ $user->isAdmin() ? 'Administration' : 'Mairie' }}</h3>
+            <div class="sidebar-brand-icon">
+                <i class="bi {{ $user->isAdmin() ? 'bi-shield-lock' : 'bi-building' }}"></i>
             </div>
-            <div class="sidebar-user">
-                <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Admin Photo" class="user-avatar">
-                <div class="user-info">
-                    <h5>Jean Kouassi</h5>
-                    <span>Super Administrateur</span>
-                </div>
+        </div>
+
+        <div class="sidebar-user">
+            <img src="{{ $user->isAdmin() ? 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' : 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }}" alt="Photo" class="user-avatar">
+            <div class="user-info">
+                <h5>{{ $user->name }}</h5>
+                <span>{{ $user->isAdmin() ? 'Super Administrateur' : 'Agent Municipal' }}</span>
             </div>
-            <ul class="list-unstyled components">
+        </div>
+
+        <ul class="list-unstyled components">
+            @if($user->isAdmin())
                 <li class="active">
-                    <a href="{{ route('admin.dashboard') }}" id="dashboard-link">
+                    <a href="{{ route('admin.dashboard') }}">
                         <i class="bi bi-speedometer2"></i>
                         Tableau de Bord
                     </a>
                 </li>
-                <li>
-                    <a href="{{ route('admin.agents.index') }}" id="agents-link">
-                        <i class="bi bi-people"></i>
-                        Agents
-                        <span class="badge rounded-pill bg-primary ms-2">45</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('admin.regions.index') }}" id="regions-link">
-                        <i class="bi bi-geo-alt"></i>
-                        Régions
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('admin.communes.index') }}" id="regions-link">
-                        <i class="bi bi-geo-alt"></i>
-                        Communes
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="statistics-link">
-                        <i class="bi bi-graph-up"></i>
-                        Statistiques
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="settings-link">
-                        <i class="bi bi-gear"></i>
-                        Paramètres
-                    </a>
-                </li>
-            </ul>
-            <div class="sidebar-footer">
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
-                <a href="#" id="logout-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="bi bi-box-arrow-left"></i> Déconnexion
+            @else
+                <li class="active">
+                <a href="{{ route('agent.dashboard') }}">
+                    <i class="bi bi-speedometer2"></i>
+                    Tableau de Bord
                 </a>
-            </div>
-        </nav>
+            </li>
+            @endif
 
-        @yield('content')
-    </div>
+            @if ($user->isAdmin())
+                <li><a href="{{ route('admin.agents.index') }}"><i class="bi bi-people"></i> Agents</a></li>
+                <li><a href="{{ route('admin.regions.index') }}"><i class="bi bi-geo-alt"></i> Régions</a></li>
+                <li><a href="{{ route('admin.communes.index') }}"><i class="bi bi-geo-alt"></i> Communes</a></li>
+                <li><a href="#"><i class="bi bi-graph-up"></i> Statistiques</a></li>
+            @else
+                <li><a href="#"><i class="bi bi-hourglass-split"></i> En Attente <span class="badge rounded-pill bg-warning ms-2">24</span></a></li>
+                <li><a href="#"><i class="bi bi-check-circle"></i> Approuvés</a></li>
+                <li><a href="#"><i class="bi bi-x-circle"></i> Rejetés</a></li>
+            @endif
+
+            <li><a href="#"><i class="bi bi-gear"></i> Paramètres</a></li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
+            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="bi bi-box-arrow-left"></i> Déconnexion
+            </a>
+        </div>
+    </nav>
+
+
+    @yield('content')
+</div>
+
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -606,5 +603,11 @@ body {
       }
     });
 </script>
+<!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/charts.js"></script>
+
 </body>
 </html>

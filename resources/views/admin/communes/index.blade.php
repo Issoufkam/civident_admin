@@ -27,11 +27,12 @@
     {{-- Tableau des communes --}}
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
-            <thead class="table-dark">
+            <thead class="table-primary">
                 <tr>
                     <th>#</th>
                     <th>Nom</th>
                     <th>Région</th>
+                    <th>Code de la commune</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -39,7 +40,8 @@
                 @forelse($communes as $commune)
                     <tr>
                         <td>{{ $loop->iteration + ($communes->currentPage() - 1) * $communes->perPage() }}</td>
-                        <td>{{ $commune->nom }}</td>
+                        <td>{{ $commune->name }}</td>
+                        <td>{{ $commune->code }}
                         <td>{{ $commune->region }}</td>
                         <td>
                             <a href="{{ route('admin.communes.edit', $commune) }}" class="btn btn-sm btn-warning">
