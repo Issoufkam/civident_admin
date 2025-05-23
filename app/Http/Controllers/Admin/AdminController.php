@@ -237,7 +237,7 @@ class AdminController extends Controller
             ->take(5)
             ->get(['id', 'nom', 'prenom', 'commune_id']); // en tenant compte des colonnes réelles
 
-        // ➤ Cartes dynamiques
+        // Cartes dynamiques
         $cards = [
             [
                 'label' => 'Agents enregistrés',
@@ -271,7 +271,8 @@ class AdminController extends Controller
             'cards',
             'regionsPerformance',
             'latestAgents',
-            'agents'
+            'agents',
+            'totalAgents',
         ));
 
     }

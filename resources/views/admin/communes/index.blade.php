@@ -27,7 +27,7 @@
     {{-- Tableau des communes --}}
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
-            <thead class="table-dark">
+            <thead class="table-primary">
                 <tr>
                     <th>#</th>
                     <th>Nom</th>

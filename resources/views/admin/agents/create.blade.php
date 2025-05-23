@@ -50,7 +50,10 @@
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
-
+        <div class="mb-3">
+            <label for="photo" class="form-label">Photo de profil</label>
+            <input type="file" name="photo" class="form-control" accept="image/*">
+        </div>
         <div class="mb-3">
             <label for="commune_id" class="form-label">Commune</label>
             <select name="commune_id" id="commune_id" class="form-select @error('commune_id') is-invalid @enderror" required>

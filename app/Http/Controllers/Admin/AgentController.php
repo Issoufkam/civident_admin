@@ -7,9 +7,11 @@ use App\Models\User;
 use App\Models\Document;
 use App\Models\Commune;
 use App\Enums\DocumentStatus;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class AgentController extends Controller
 {
@@ -46,27 +48,41 @@ class AgentController extends Controller
     }
 
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $this->authorize('create', User::class);
 
+        // Validation des données
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'telephone' => 'required|string|max:20|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'email' => 'required|email|unique:users,email',
+            'telephone' => 'required|string|max:20|unique:users,telephone',
+            'password' => 'required|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:7048',
         ]);
 
+        // Téléversement de la photo si présente
+        if ($request->hasFile('photo')) {
+            $validated['photo'] = $request->file('photo')->store('profiles', 'public');
+        }
+
+        // Création de l'utilisateur
         User::create([
-            ...$validated,
+            'nom' => $validated['nom'],
+            'prenom' => $validated['prenom'],
+            'email' => $validated['email'],
+            'telephone' => $validated['telephone'],
+            'password' => Hash::make($request->password),
+            'photo' => $validated['photo'] ?? null,
             'role' => 'agent',
             'commune_id' => auth()->user()->commune_id,
-            'password' => bcrypt($validated['password']),
         ]);
 
         return redirect()->route('admin.agents.index')->with('success', 'Nouvel agent créé avec succès');
     }
+
+
 
     public function show($id)
     {
