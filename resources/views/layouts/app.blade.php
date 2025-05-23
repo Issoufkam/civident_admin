@@ -867,15 +867,15 @@ body {
           <form id="newAgentForm">
             <div class="mb-3">
               <label for="agentName" class="form-label">Nom complet</label>
-              <input type="text" class="form-control" id="agentName" required>
+              <input type="text" class="form-control" id="agentName" placeholder=" entrer nom et prenom" required>
             </div>
             <div class="mb-3">
               <label for="agentEmail" class="form-label">Email</label>
-              <input type="email" class="form-control" id="agentEmail" required>
+              <input type="email" class="form-control" id="agentEmail" placeholder="exemple@email.com" required>
             </div>
             <div class="mb-3">
               <label for="agentPassword" class="form-label">Mot de passe</label>
-              <input type="password" class="form-control" id="agentPassword" required>
+              <input type="password" class="form-control" id="agentPassword" placeholder="******" required>
             </div>
             <div class="mb-3">
               <label for="agentRegion" class="form-label">Région</label>
