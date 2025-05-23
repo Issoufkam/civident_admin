@@ -37,11 +37,11 @@
                         <td>{{ $agent->prenom }}</td>
                         <td>{{ $agent->email }}</td>
                         <td>{{ $agent->telephone }}</td>
-                        <td>{{ $agent->commune->nom ?? 'Non défini' }}</td>
+                        <td>{{ $agent->commune->name ?? 'Non défini' }}</td>
                         <td>
                             <a href="{{ route('admin.agents.show', $agent->id) }}" class="btn btn-sm btn-info">Voir</a>
                             <a href="{{ route('admin.agents.edit', $agent->id) }}" class="btn btn-sm btn-warning">Modifier</a>
-                            <form action="{{ route('admin.agents.update', $agent->id) }}" method="POST" style="display:inline-block">
+                            <form action="{{ route('admin.agents.destroy', $agent->id) }}" method="POST" style="display:inline-block">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cet agent ?')">Supprimer</button>

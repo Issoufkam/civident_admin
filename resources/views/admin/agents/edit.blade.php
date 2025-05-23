@@ -46,7 +46,7 @@
                 <option value="">-- Sélectionnez une commune --</option>
                 @foreach ($communes as $commune)
                     <option value="{{ $commune->id }}" {{ $agent->commune_id == $commune->id ? 'selected' : '' }}>
-                        {{ $commune->nom }}
+                        {{ $commune->name }}
                     </option>
                 @endforeach
             </select>
