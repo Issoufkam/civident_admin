@@ -112,7 +112,7 @@
                     <a href="{{ route('admin.agents.create') }}" class="btn btn-success">
                         <i class="bi bi-plus-lg"></i>
                         <span>Ajouter un agent</span>
-                    </a>
+                   </a>
                 </div>
 
                 <div class="p-4">

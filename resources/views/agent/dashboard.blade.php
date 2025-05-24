@@ -2,17 +2,51 @@
 
 @section('content')
 
+<style>
+        .stats-card {
+            transition: transform 0.2s;
+        }
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+        .stats-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        .view-all {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        .view-all:hover {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+        .list-group-item {
+            border-left: 0;
+            border-right: 0;
+        }
+        .list-group-item:first-child {
+            border-top: 0;
+        }
+        .list-group-item:last-child {
+            border-bottom: 0;
+        }
+    </style>
+
 <div class="wrapper">
   <!-- Main Content -->
   <div class="container-fluid px-4 py-4" id="main-content">
-
-    <!-- Header Section -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <h1 class="page-title">Tableau de Bord Super Admin</h1>
-        <p class="text-muted">Vue d'ensemble de l'activité nationale</p>
-      </div>
-    </div>
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h1 class="h2 mb-1">Tableau de Bord Super Admin</h1>
+                    <p class="text-muted">Vue d'ensemble de l'activité nationale</p>
+                </div>
+            </div>
 
     <!-- Stats Cards Row -->
     <div class="row stats-row mb-4">
