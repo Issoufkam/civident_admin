@@ -443,14 +443,14 @@ body {
 
         <ul class="list-unstyled components">
             @if($user->isAdmin())
-                <li class="active">
+                <li class="">
                     <a href="{{ route('admin.dashboard') }}">
                         <i class="bi bi-speedometer2"></i>
                         Tableau de Bord
                     </a>
                 </li>
             @else
-                <li class="active">
+                <li class="">
                 <a href="{{ route('agent.dashboard') }}">
                     <i class="bi bi-speedometer2"></i>
                     Tableau de Bord
@@ -462,7 +462,7 @@ body {
                 <li><a href="{{ route('admin.agents.index') }}"><i class="bi bi-people"></i> Agents</a></li>
                 <li><a href="{{ route('admin.regions.index') }}"><i class="bi bi-geo-alt"></i> Régions</a></li>
                 <li><a href="{{ route('admin.communes.index') }}"><i class="bi bi-geo-alt"></i> Communes</a></li>
-                <li><a href="#"><i class="bi bi-graph-up"></i> Statistiques</a></li>
+              
             @else
                 <li><a href="{{ route('agent.demandes.index') }}"><i class="bi bi-file-earmark-text"></i>Demandes</a></li>
                 <li><a href="#"><i class="bi bi-hourglass-split"></i> En Attente <span class="badge rounded-pill bg-warning ms-2">24</span></a></li>
@@ -470,7 +470,7 @@ body {
                 <li><a href="#"><i class="bi bi-x-circle"></i> Rejetés</a></li>
             @endif
 
-            <li><a href="#"><i class="bi bi-gear"></i> Paramètres</a></li>
+        
         </ul>
 
         <div class="sidebar-footer">
@@ -486,10 +486,66 @@ body {
 </div>
 
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+        <!-- Regional Performance and Agent Management -->
+        
+
+        <!-- Document Types and Regional Distribution -->
+        
+
+  <!-- New Agent Modal -->
+  <div class="modal fade" id="newAgentModal" tabindex="-1" aria-labelledby="newAgentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newAgentModalLabel">Créer un Nouvel Agent</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="newAgentForm">
+            <div class="mb-3">
+              <label for="agentName" class="form-label">Nom complet</label>
+              <input type="text" class="form-control" id="agentName" placeholder=" entrer nom et prenom" required>
+            </div>
+            <div class="mb-3">
+              <label for="agentEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" id="agentEmail" placeholder="exemple@email.com" required>
+            </div>
+            <div class="mb-3">
+              <label for="agentPassword" class="form-label">Mot de passe</label>
+              <input type="password" class="form-control" id="agentPassword" placeholder="******" required>
+            </div>
+            <div class="mb-3">
+              <label for="agentRegion" class="form-label">Région</label>
+              <select class="form-select" id="agentRegion" required>
+                <option value="">Sélectionner une région</option>
+                <option value="abidjan">Abidjan</option>
+                <option value="yamoussoukro">Yamoussoukro</option>
+                <option value="bouake">Bouaké</option>
+                <option value="san-pedro">San-Pédro</option>
+                <option value="korhogo">Korhogo</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="agentRole" class="form-label">Rôle</label>
+              <select class="form-select" id="agentRole" required>
+                <option value="agent">Agent Municipal</option>
+                <option value="supervisor">Superviseur</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" class="btn btn-primary" id="createAgentBtn">Créer l'agent</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
     // Initialize charts
     document.addEventListener('DOMContentLoaded', function() {
       // Document Type Distribution Chart
