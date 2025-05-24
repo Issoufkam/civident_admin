@@ -88,7 +88,7 @@ class DocumentAdminController extends Controller
             'metadata' => $metadata,
         ]);
 
-        return redirect()->route('admin.documents.index')->with('success', 'Document créé avec succès');
+        return redirect()->route('agent.documents.index')->with('success', 'Document créé avec succès');
     }
 
     public function showDocument(Document $document)
