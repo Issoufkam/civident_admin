@@ -109,7 +109,7 @@
                         <i class="bi bi-people-fill fs-4"></i>
                         <h1 class="h3 mb-0">Liste des agents</h1>
                     </div>
-                    <a href="#" class="btn btn-success">
+                    <a href="{{ route('admin.agents.create') }}" class="btn btn-success">
                         <i class="bi bi-plus-lg"></i>
                         <span>Ajouter un agent</span>
                     </a>
