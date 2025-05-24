@@ -78,20 +78,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 
 Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->group(function () {
-
     Route::get('/dashboard', [AgentController::class, 'dashboard'])->name('dashboard');
 
-    Route::prefix('documents')->group(function () {
-        Route::get('/', [DocumentAdminController::class, 'index'])->name('documents.index');
-        Route::get('/create', [DocumentAdminController::class, 'create'])->name('documents.create');
-        Route::post('/', [DocumentAdminController::class, 'store'])->name('documents.store');
-        Route::get('/{document}', [DocumentAdminController::class, 'showDocument'])->name('documents.show');
-        Route::post('/{document}/approve', [DocumentAdminController::class, 'approveDocument'])->name('documents.approve');
-        Route::post('/{document}/reject', [DocumentAdminController::class, 'rejectDocument'])->name('documents.reject');
-        Route::get('/{document}/pdf', [DocumentAdminController::class, 'generateDocumentPdf'])->name('documents.pdf');
+    Route::prefix('documents')->name('documents.')->group(function () {
+        Route::get('/', [DocumentAdminController::class, 'index'])->name('index');
+        Route::get('/create', [DocumentAdminController::class, 'create'])->name('create');
+        Route::post('/', [DocumentAdminController::class, 'store'])->name('store');
+        Route::get('/{document}', [DocumentAdminController::class, 'showDocument'])->name('show');
+        Route::post('/{document}/approve', [DocumentAdminController::class, 'approve'])->name('approve'); // ✅ nom correct
+        Route::post('/{document}/reject', [DocumentAdminController::class, 'rejectDocument'])->name('reject');
+        Route::get('/{document}/pdf', [DocumentAdminController::class, 'generateDocumentPdf'])->name('pdf');
     });
-
 });
+
 
 
 // Déconnexion personnalisée

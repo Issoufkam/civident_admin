@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('justificatif_path'); // Chemin du fichier justificatif
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('commune_id')->constrained()->onDelete('cascade');
+            $table->date('traitement_date')->nullable();
             $table->foreignId('agent_id')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
