@@ -7,7 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\CommuneAdminController;
-use App\Http\Controllers\Admin\DocumentController;
+use App\Http\Controllers\Admin\DocumentAdminController;
 use App\Models\Commune;
 
 Auth::routes();
@@ -93,12 +93,13 @@ Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->grou
 
     // Gestion des documents
     Route::prefix('documents')->group(function () {
-        Route::get('/', [DocumentController::class, 'documents'])->name('documents.index');
-        Route::get('/demandes', [DocumentController::class, 'demandes'])->name('demandes.index');
-        Route::get('/{document}', [DocumentController::class, 'showDocument'])->name('documents.show');
-        Route::post('/{document}/approve', [DocumentController::class, 'approveDocument'])->name('documents.approve');
-        Route::post('/{document}/reject', [DocumentController::class, 'rejectDocument'])->name('documents.reject');
-        Route::get('/{document}/pdf', [DocumentController::class, 'generateDocumentPdf'])->name('documents.pdf');
+        // Route::get('/', [DocumentAdminController::class, 'documents'])->name('documents.index');
+        Route::get('/document', [DocumentAdminController::class, 'index'])->name('documents.index');
+        Route::get('/{document}', [DocumentAdminController::class, 'showDocument'])->name('documents.show');
+        Route::post('/{document}/approve', [DocumentAdminController::class, 'approveDocument'])->name('documents.approve');
+        Route::post('/{document}/reject', [DocumentAdminController::class, 'rejectDocument'])->name('documents.reject');
+        Route::get('/{document}/pdf', [DocumentAdminController::class, 'generateDocumentPdf'])->name('documents.pdf');
+        Route::get('/document', [DocumentAdminController::class, 'create'])->name('documents.create');
     });
 });
 

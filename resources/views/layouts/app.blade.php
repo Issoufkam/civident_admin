@@ -462,15 +462,15 @@ body {
                 <li><a href="{{ route('admin.agents.index') }}"><i class="bi bi-people"></i> Agents</a></li>
                 <li><a href="{{ route('admin.regions.index') }}"><i class="bi bi-geo-alt"></i> Régions</a></li>
                 <li><a href="{{ route('admin.communes.index') }}"><i class="bi bi-geo-alt"></i> Communes</a></li>
-              
+
             @else
-                <li><a href="{{ route('agent.demandes.index') }}"><i class="bi bi-file-earmark-text"></i>Demandes</a></li>
+                <li><a href="{{ route('agent.documents.index') }}"><i class="bi bi-file-earmark-text"></i>Demandes</a></li>
                 <li><a href="#"><i class="bi bi-hourglass-split"></i> En Attente <span class="badge rounded-pill bg-warning ms-2">24</span></a></li>
                 <li><a href="#"><i class="bi bi-check-circle"></i> Approuvés</a></li>
                 <li><a href="#"><i class="bi bi-x-circle"></i> Rejetés</a></li>
             @endif
 
-        
+
         </ul>
 
         <div class="sidebar-footer">
@@ -487,10 +487,10 @@ body {
 
 
         <!-- Regional Performance and Agent Management -->
-        
+
 
         <!-- Document Types and Regional Distribution -->
-        
+
 
   <!-- New Agent Modal -->
   <div class="modal fade" id="newAgentModal" tabindex="-1" aria-labelledby="newAgentModalLabel" aria-hidden="true">

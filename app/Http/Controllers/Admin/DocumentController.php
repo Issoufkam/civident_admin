@@ -22,6 +22,7 @@ class DocumentController extends Controller
     public function demandes()
     {
         $user = auth()->user();
+
         $query = Document::with('user');
 
         if ($user->role === UserRole::AGENT) {
@@ -67,7 +68,9 @@ class DocumentController extends Controller
 
         return view('documents.create', [
             'types' => DocumentType::cases(),
-            'communes' => $user->isAdmin() ? Commune::all() : [$user->commune]
+            'communes' => $user->isAdmin()
+                ? Commune::all()
+                : [$user->commune]
         ]);
     }
 
@@ -84,7 +87,11 @@ class DocumentController extends Controller
             'metadata.date_acte' => ['required', 'date'],
         ]);
 
-        $registryNumber = $this->generateRegistryNumber($validated['type'], $validated['commune_id']);
+        $registryNumber = $this->generateRegistryNumber(
+            $validated['type'],
+            $validated['commune_id']
+        );
+
         $path = $request->file('justificatif')->store('justificatifs');
 
         $document = Document::create([
@@ -94,7 +101,9 @@ class DocumentController extends Controller
             'justificatif_path' => $path,
             'user_id' => $user->id,
             'commune_id' => $validated['commune_id'],
-            'status' => $user->isCitoyen() ? DocumentStatus::EN_ATTENTE : DocumentStatus::APPROUVEE
+            'status' => $user->isCitoyen()
+                ? DocumentStatus::EN_ATTENTE
+                : DocumentStatus::APPROUVEE
         ]);
 
         return redirect()->route('documents.show', $document)
@@ -123,7 +132,7 @@ class DocumentController extends Controller
             'status' => $validated['status'],
             'agent_id' => auth()->id(),
             'metadata' => array_merge(
-                $document->metadata,
+                $document->metadata ?? [],
                 ['comments' => $validated['comments'] ?? null]
             )
         ]);
@@ -138,7 +147,7 @@ class DocumentController extends Controller
         $this->authorize('view', $document);
 
         if (!Storage::exists($document->justificatif_path)) {
-            abort(404);
+            abort(404, 'Fichier non trouvé.');
         }
 
         return Storage::download(
