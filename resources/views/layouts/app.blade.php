@@ -436,7 +436,7 @@ body {
         <div class="sidebar-user">
             <img src="{{ $user->isAdmin() ? 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' : 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }}" alt="Photo" class="user-avatar">
             <div class="user-info">
-                <h5>{{ $user->name }}</h5>
+                <h5>{{ $user->nom }}</h5>
                 <span>{{ $user->isAdmin() ? 'Super Administrateur' : 'Agent Municipal' }}</span>
             </div>
         </div>
@@ -464,6 +464,7 @@ body {
                 <li><a href="{{ route('admin.communes.index') }}"><i class="bi bi-geo-alt"></i> Communes</a></li>
                 <li><a href="#"><i class="bi bi-graph-up"></i> Statistiques</a></li>
             @else
+                <li><a href="{{ route('agent.demandes.index') }}"><i class="bi bi-file-earmark-text"></i>Demandes</a></li>
                 <li><a href="#"><i class="bi bi-hourglass-split"></i> En Attente <span class="badge rounded-pill bg-warning ms-2">24</span></a></li>
                 <li><a href="#"><i class="bi bi-check-circle"></i> Approuvés</a></li>
                 <li><a href="#"><i class="bi bi-x-circle"></i> Rejetés</a></li>

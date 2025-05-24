@@ -7,8 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\CommuneAdminController;
-
-use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\Admin\DocumentController;
 use App\Models\Commune;
 
 Auth::routes();
@@ -85,20 +84,21 @@ Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->grou
     Route::get('/dashboard', [AgentController::class, 'dashboard'])->name('dashboard');
 
     // Gestion des agents
-    Route::prefix('agents')->group(function () {
-        Route::get('/', [AgentController::class, 'index'])->name('agents.index');
-        Route::get('/create', [AgentController::class, 'create'])->name('agents.create');
-        Route::post('/', [AgentController::class, 'store'])->name('agents.store');
-        Route::delete('/{agent}', [AgentController::class, 'destroy'])->name('agents.destroy');
-    });
+    // Route::prefix('agents')->group(function () {
+    //     Route::get('/', [AgentController::class, 'index'])->name('agents.index');
+    //     Route::get('/create', [AgentController::class, 'create'])->name('agents.create');
+    //     Route::post('/', [AgentController::class, 'store'])->name('agents.store');
+    //     Route::delete('/{agent}', [AgentController::class, 'destroy'])->name('agents.destroy');
+    // });
 
     // Gestion des documents
     Route::prefix('documents')->group(function () {
-        Route::get('/', [AgentController::class, 'documents'])->name('documents.index');
-        Route::get('/{document}', [AgentController::class, 'showDocument'])->name('documents.show');
-        Route::post('/{document}/approve', [AgentController::class, 'approveDocument'])->name('documents.approve');
-        Route::post('/{document}/reject', [AgentController::class, 'rejectDocument'])->name('documents.reject');
-        Route::get('/{document}/pdf', [AgentController::class, 'generateDocumentPdf'])->name('documents.pdf');
+        Route::get('/', [DocumentController::class, 'documents'])->name('documents.index');
+        Route::get('/demandes', [DocumentController::class, 'demandes'])->name('demandes.index');
+        Route::get('/{document}', [DocumentController::class, 'showDocument'])->name('documents.show');
+        Route::post('/{document}/approve', [DocumentController::class, 'approveDocument'])->name('documents.approve');
+        Route::post('/{document}/reject', [DocumentController::class, 'rejectDocument'])->name('documents.reject');
+        Route::get('/{document}/pdf', [DocumentController::class, 'generateDocumentPdf'])->name('documents.pdf');
     });
 });
 

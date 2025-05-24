@@ -160,7 +160,7 @@
                     <div class="list-group list-group-flush">
                         @forelse ($agents as $agent)
                             <div class="list-group-item border-0 d-flex align-items-center">
-                                <img src="{{ $agent->profile_photo_url ?? 'https://via.placeholder.com/40' }}" class="rounded-circle" alt="Photo de {{ $agent->nom }} {{ $agent->prenom }}" width="40" height="40">
+                                <img src="{{ asset('storage/' . $agent->photo) }}" class="rounded-circle" alt="Photo de {{ $agent->nom }} {{ $agent->prenom }}" width="40" height="40">
                                 <div class="ms-3">
                                     <h6 class="mb-0">{{ $agent->nom }} {{ $agent->prenom }}</h6>
                                     <small class="text-muted">{{ $agent->commune->nom ?? 'Localisation inconnue' }}</small>

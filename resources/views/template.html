@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Extrait de Naissance</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 14px; }
+        h1 { text-align: center; }
+        .section { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Extrait d'Acte de Naissance</h1>
+    <div class="section"><strong>Nom :</strong> {{ $data['nom'] }}</div>
+    <div class="section"><strong>Prénom :</strong> {{ $data['prenom'] }}</div>
+    <div class="section"><strong>Date de naissance :</strong> {{ $data['date_naissance'] }}</div>
+    <div class="section"><strong>Nom du père :</strong> {{ $data['nom_pere'] }}</div>
+    <div class="section"><strong>Nom de la mère :</strong> {{ $data['nom_mere'] }}</div>
+</body>
+</html>

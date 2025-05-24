@@ -16,7 +16,7 @@
             <p><strong>Prénom :</strong> {{ $agent->prenom }}</p>
             <p><strong>Email :</strong> {{ $agent->email }}</p>
             <p><strong>Téléphone :</strong> {{ $agent->telephone }}</p>
-            <p><strong>Commune :</strong> {{ $agent->commune?->nom ?? 'N/A' }}</p>
+            <p><strong>Commune :</strong> {{ $agent->commune?->name ?? 'N/A' }}</p>
             <p><strong>Rôle :</strong> {{ ucfirst($agent->role) }}</p>
 
             <a href="{{ route('admin.agents.edit', $agent->id) }}" class="btn btn-primary mt-3">Modifier</a>
