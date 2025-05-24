@@ -4,20 +4,16 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
-    use RegistersUsers;
-
-    protected $redirectTo = '/home';
-
     public function __construct()
     {
-        $this->middleware('guest');
+        // Middleware pour s'assurer que seul un admin peut enregistrer un utilisateur
+        $this->middleware('can:create,user');
     }
 
     protected function validator(array $data)
@@ -35,32 +31,29 @@ class RegisterController extends Controller
         ]);
     }
 
-    /**
-     * Create a new user instance after a valid registration.
-     *
-     * @param  array  $data
-     * @return \App\Models\User
-     */
-    protected function create(array $data)
+    public function store(Request $request)
     {
-        // Gérer le téléchargement de la photo
+        $this->validator($request->all())->validate();
+
         $photoPath = null;
 
-        if (request()->hasFile('photo')) {
-            $photo = request()->file('photo');
+        if ($request->hasFile('photo')) {
+            $photo = $request->file('photo');
             $photoPath = $photo->store('profiles', 'public');
         }
 
-        return User::create([
-            'nom' => $data['nom'],
-            'prenom' => $data['prenom'],
-            'telephone' => $data['telephone'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+        $user = User::create([
+            'nom' => $request->nom,
+            'prenom' => $request->prenom,
+            'telephone' => $request->telephone,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
             'photo' => $photoPath,
-            'adresse' => $data['adresse'] ?? null,
-            'commune_id' => $data['commune_id'] ?? null,
-            'role' => $data['role'],
+            'adresse' => $request->adresse,
+            'commune_id' => $request->commune_id,
+            'role' => $request->role,
         ]);
+
+        return redirect()->route('users.index')->with('success', 'Utilisateur créé avec succès.');
     }
 }

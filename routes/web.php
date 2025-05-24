@@ -25,19 +25,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     // Gestion des utilisateurs (agents)
-    Route::prefix('agents')->group(function () {
-        Route::get('/', [AgentController::class, 'index'])->name('agents.index');
-        Route::get('/create', [AgentController::class, 'create'])->name('agents.create');
-        Route::post('/', [AgentController::class, 'store'])->name('agents.store');
-        Route::get('/{user}/edit', [AgentController::class, 'edit'])->name('agents.edit');
-        Route::put('/{user}', [AgentController::class, 'update'])->name('agents.update');
-        Route::delete('/{user}', [AgentController::class, 'destroy'])->name('agents.delete');
-    });
+        Route::prefix('agents')->name('agents.')->group(function () {
+            Route::get('/', [AgentController::class, 'index'])->name('index');
+            Route::get('create', [AgentController::class, 'create'])->name('create');
+            Route::post('/', [AgentController::class, 'store'])->name('store');
+            Route::get('{id}', [AgentController::class, 'show'])->name('show');
+            Route::get('{id}/edit', [AgentController::class, 'edit'])->name('edit');
+            Route::put('{id}', [AgentController::class, 'update'])->name('update');
+            Route::delete('{agent}', [AgentController::class, 'destroy'])->name('destroy');
+        });
 
     // Statistiques globales
     Route::get('/statistics', [AdminController::class, 'showStatistics'])->name('statistics');
 
-    // paramètres 
+    // paramètres
     Route::get('/Settings', [AdminController::class, 'showSettings'])->name('settings');
 
     // recherche
@@ -45,11 +46,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // notifications
      Route::get('/Notifications', [AdminController::class, 'showNotifications'])->name('notifications');
-    
+
     //sidebar
     Route::get('/ToggleSidebar', [AdminController::class, 'showToggleSidebar'])->name('togglesidebar');
 
-    
+
 
 
     // Historique des actions
@@ -62,7 +63,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/', [CommuneAdminController::class, 'store'])->name('communes.store');
         Route::get('/{commune}/edit', [CommuneAdminController::class, 'edit'])->name('communes.edit');
         Route::put('/{commune}', [CommuneAdminController::class, 'update'])->name('communes.update');
-        Route::delete('/{commune}', [CommuneAdminController::class, 'destroy'])->name('communes.delete');
+        Route::delete('/{commune}', [CommuneAdminController::class, 'destroy'])->name('communes.destroy');
     });
 
     // Gestion des régions

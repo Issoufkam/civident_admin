@@ -1,8 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
-
+<!DOCTYPE html>
+<html lang="fr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier un Agent</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: #f8f9fa;
@@ -16,7 +22,7 @@
             overflow: hidden;
         }
         .form-header {
-            background: linear-gradient(to right, #0d6efd, #0a58ca);
+            background: linear-gradient(to right, #6366f1, #4f46e5);
             color: white;
             padding: 1.5rem;
             display: flex;
@@ -35,8 +41,8 @@
             transition: all 0.2s;
         }
         .form-control:focus, .form-select:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            border-color: #6366f1;
+            box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
         }
         .photo-upload {
             border: 2px dashed #dee2e6;
@@ -47,14 +53,20 @@
             transition: all 0.2s;
         }
         .photo-upload:hover {
-            border-color: #0d6efd;
+            border-color: #6366f1;
             background-color: #f8f9fa;
+        }
+        .current-photo {
+            max-width: 150px;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
         }
         .photo-preview {
             max-width: 150px;
             max-height: 150px;
             margin: 1rem auto;
             display: none;
+            border-radius: 0.5rem;
         }
         .error-container {
             background-color: #fff5f5;
@@ -69,11 +81,11 @@
             font-weight: 500;
         }
         .btn-primary {
-            background: #0d6efd;
+            background: #6366f1;
             border: none;
         }
         .btn-primary:hover {
-            background: #0a58ca;
+            background: #4f46e5;
         }
         .loading {
             display: none;
@@ -102,8 +114,8 @@
     <div class="container">
         <div class="form-container">
             <div class="form-header">
-                <i class="bi bi-person-plus-fill"></i>
-                <h1 class="h3 mb-0">Ajouter un nouvel agent</h1>
+                <i class="bi bi-person-gear"></i>
+                <h1 class="h3 mb-0">Modifier l'agent</h1>
             </div>
 
             <div class="form-content">
@@ -116,113 +128,93 @@
                     <div class="row g-4">
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label class="form-label">Photo actuelle</label>
+                                <div class="text-center">
+                                 <img src="{{ asset('storage/' . $agent->photo) }}" alt="Photo actuelle" class="img-thumbnail" width="150">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Changer la photo</label>
+                                <div class="photo-upload" id="photoUpload">
+                                    <i class="bi bi-cloud-upload fs-3 text-primary"></i>
+                                    <p class="mb-0 mt-2">Cliquez pour sélectionner une nouvelle photo</p>
+                                    <small class="text-muted d-block">JPG, PNG, GIF (max 2MB)</small>
+                                    <img id="photoPreview" class="photo-preview" alt="Preview">
+                                    <input type="file" class="d-none" id="photo" name="photo" accept="image/*">
+                                </div>
+                                <small class="text-muted">Laissez vide si vous ne souhaitez pas modifier la photo.</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="nom" class="form-label">Nom <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="nom" class="form-control @error('nom') is-invalid @enderror" value="{{ old('nom') }}" name="nom" required>
-                                @error('nom')
-                                   <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <input type="text" name="nom" id="nom" class="form-control" value="{{ old('nom', $agent->nom) }}" required>
+                                <div class="invalid-feedback"></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="prenom" class="form-control @error('prenom') is-invalid @enderror" value="{{ old('prenom') }}" name="prenom" required>
-                                @error('nom')
-                                   <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="telephone" name="telephone" required>
-                                @error('nom')
-                                   <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                 <input type="text" name="prenom" id="prenom" class="form-control" value="{{ old('prenom', $agent->prenom) }}" required>
+                                <div class="invalid-feedback"></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                                @error('nom')
-                                   <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <input type="email" name="email" id="email" class="form-control" value="{{ old('email', $agent->email) }}" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
+                                 <input type="text" name="telephone" id="telephone" class="form-control" value="{{ old('telephone', $agent->telephone) }}">
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
+                    </div>
 
-                         <!-- la photo -->
-
+                    <div class="row g-4 mt-2">
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Photo de profil</label>
-                                <div class="photo-upload" id="photoUpload">
-                                    <i class="bi bi-cloud-upload fs-3 text-primary"></i>
-                                    <p class="mb-0 mt-2">Cliquez pour sélectionner une photo</p>
-                                    <small class="text-muted d-block">JPG, PNG, GIF (max 2MB)</small>
-                                    <img id="photoPreview" class="photo-preview img-fluid" alt="Preview">
-                                    <input type="file" class="d-none" id="photo" name="photo" accept="image/*">
-                                </div>
-                            </div>
-
-
-                            <!-- commune --->
-
                             <div class="mb-3">
                                 <label for="commune_id" class="form-label">Commune <span class="text-danger">*</span></label>
                                 <select class="form-select" id="commune_id" name="commune_id" required>
-                                    <option value="">-- Choisir une commune --</option>
-                                    <option value="1">Paris</option>
-                                    <option value="2">Marseille</option>
-                                    <option value="3">Lyon</option>
-                                    <option value="4">Toulouse</option>
-                                    <option value="5">Nice</option>
+                                    <option value="">-- Sélectionnez une commune --</option>
+                                    <option value="1">marcory</option>
+                                    <option value="2">treichvile</option>
+                                    <option value="3">port-bouet</option>
+                                    <option value="4">plateau</option>
+                                    <option value="5">abobo</option>
                                 </select>
-                                @error('nom')
-                                   <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Nouveau mot de passe</label>
+                               <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" required>
+                                <small class="text-muted">Laissez vide si vous ne souhaitez pas modifier le mot de passe.</small>
+                                @error('password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            <!--Role--->
-
                             <div class="mb-3">
-                                <label for="role" class="form-label">Rôle <span class="text-danger">*</span></label>
-                                <select name="role" id="role" class="form-select @error('role') is-invalid @enderror" required>
-                                    <option value="">-- Choisir un rôle --</option>
-                                    <option value="admin">Administrateur</option>
-                                    <option value="agent">Agent</option>
-                                
-                    
-
-                                </select>
-                                @error('nom')
-                                   <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <!--mot de passe -->
-
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
-                                <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" required>
-                                @error('nom')
-                                   <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label for="adresse" class="form-label">Adresse</label>
+                                <input type="text" class="form-control" id="adresse" name="adresse">
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!--adresse -->
-
-                    <div class="mb-3">
-                        <label for="adresse" class="form-label">Adresse</label>
-                       <input type="text" name="adresse" id="adresse" class="form-control @error('adresse') is-invalid @enderror" value="{{ old('adresse') }}">
-                        @error('nom')
-                                   <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
                     <div class="d-flex justify-content-end gap-2 mt-4">
-                        <button type="button" href="{{ route('admin.agents.index') }}" class="btn btn-secondary" id="cancelBtn">Annuler</button>
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">Annuler</button>
                         <button type="submit" class="btn btn-primary" id="submitBtn">
                             <span class="loading" id="loadingSpinner"></span>
-                            <span id="submitText">Enregistrer</span>
+                            <span id="submitText">Enregistrer les modifications</span>
                         </button>
                     </div>
                 </form>
@@ -234,6 +226,25 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Simulate existing agent data
+            const mockAgent = {
+                nom: 'Dupont',
+                prenom: 'Jean',
+                email: 'jean.dupont@example.com',
+                telephone: '0123456789',
+                commune_id: '1',
+                role: 'admin',
+                adresse: '123 rue de Paris'
+            };
+
+            // Fill form with mock data
+            Object.keys(mockAgent).forEach(key => {
+                const field = document.getElementById(key);
+                if (field) {
+                    field.value = mockAgent[key];
+                }
+            });
+
             const form = document.getElementById('agentForm');
             const photoUpload = document.getElementById('photoUpload');
             const photoInput = document.getElementById('photo');
@@ -311,29 +322,21 @@
 
                     // Simulate form submission
                     setTimeout(() => {
-                        alert('Agent ajouté avec succès!');
-                        form.reset();
-                        photoPreview.style.display = 'none';
+                        alert('Agent modifié avec succès!');
                         loadingSpinner.classList.remove('active');
                         submitBtn.disabled = false;
-                        submitText.textContent = 'Enregistrer';
+                        submitText.textContent = 'Enregistrer les modifications';
                     }, 1500);
                 }
             });
 
             document.getElementById('cancelBtn').addEventListener('click', () => {
-                if (confirm('Voulez-vous vraiment annuler ? Les données non enregistrées seront perdues.')) {
-                    form.reset();
-                    photoPreview.style.display = 'none';
-                    errorContainer.style.display = 'none';
-                    form.querySelectorAll('.is-invalid').forEach(field => {
-                        field.classList.remove('is-invalid');
-                    });
+                if (confirm('Voulez-vous vraiment annuler ? Les modifications non enregistrées seront perdues.')) {
+                    window.location.href = '#'; // In a real app, this would redirect to the agents list
                 }
             });
         });
     </script>
 </body>
 </html>
-
 @endsection
