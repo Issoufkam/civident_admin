@@ -77,30 +77,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 });
 
 
-// Routes réservées aux agents
 Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->group(function () {
 
-    // Tableau de bord agent
     Route::get('/dashboard', [AgentController::class, 'dashboard'])->name('dashboard');
 
-    // Gestion des agents
-    // Route::prefix('agents')->group(function () {
-    //     Route::get('/', [AgentController::class, 'index'])->name('agents.index');
-    //     Route::get('/create', [AgentController::class, 'create'])->name('agents.create');
-    //     Route::post('/', [AgentController::class, 'store'])->name('agents.store');
-    //     Route::delete('/{agent}', [AgentController::class, 'destroy'])->name('agents.destroy');
-    // });
-
-    // Gestion des documents
     Route::prefix('documents')->group(function () {
-        // Route::get('/', [DocumentAdminController::class, 'documents'])->name('documents.index');
-        Route::get('/document', [DocumentAdminController::class, 'index'])->name('documents.index');
+        Route::get('/', [DocumentAdminController::class, 'index'])->name('documents.index');
+        Route::get('/create', [DocumentAdminController::class, 'create'])->name('documents.create');
+        Route::post('/', [DocumentAdminController::class, 'store'])->name('documents.store');
         Route::get('/{document}', [DocumentAdminController::class, 'showDocument'])->name('documents.show');
         Route::post('/{document}/approve', [DocumentAdminController::class, 'approveDocument'])->name('documents.approve');
         Route::post('/{document}/reject', [DocumentAdminController::class, 'rejectDocument'])->name('documents.reject');
         Route::get('/{document}/pdf', [DocumentAdminController::class, 'generateDocumentPdf'])->name('documents.pdf');
-        Route::get('/document', [DocumentAdminController::class, 'create'])->name('documents.create');
     });
+
 });
 
 

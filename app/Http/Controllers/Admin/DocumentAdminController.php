@@ -88,4 +88,27 @@ class DocumentAdminController extends Controller
         return view('agent.documents.create');
     }
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            // ajoute ici les autres champs nécessaires au document
+        ]);
+
+        $agent = auth()->user();
+
+        // Création du document lié à l'agent et à sa commune
+        $document = Document::create([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'commune_id' => $agent->commune_id,
+            'user_id' => $agent->id,
+            'status' => DocumentStatus::EN_ATTENTE, // ou autre statut par défaut
+        ]);
+
+        return redirect()->route('agent.documents.index')->with('success', 'Document créé avec succès.');
+    }
+
+
 }
