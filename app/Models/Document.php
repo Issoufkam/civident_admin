@@ -20,7 +20,8 @@ class Document extends Model
         'justificatif_path',
         'user_id',
         'commune_id',
-        'agent_id'
+        'agent_id',
+        'traitement_date'
     ];
 
     protected $casts = [

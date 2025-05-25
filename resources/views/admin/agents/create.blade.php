@@ -112,7 +112,8 @@
                     <ul class="mb-0" id="errorList"></ul>
                 </div>
 
-                <form id="agentForm" novalidate>
+                <form id="agentForm" novalidate action="{{ route('admin.agents.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
                     <div class="row g-4">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -188,8 +189,8 @@
                                     <option value="">-- Choisir un rôle --</option>
                                     <option value="admin">Administrateur</option>
                                     <option value="agent">Agent</option>
-                                
-                    
+
+
 
                                 </select>
                                 @error('nom')
@@ -260,7 +261,7 @@
             function validateForm() {
                 const errors = [];
                 const requiredFields = form.querySelectorAll('[required]');
-                
+
                 requiredFields.forEach(field => {
                     field.classList.remove('is-invalid');
                     if (!field.value.trim()) {
@@ -303,7 +304,7 @@
 
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                
+
                 if (validateForm()) {
                     loadingSpinner.classList.add('active');
                     submitBtn.disabled = true;

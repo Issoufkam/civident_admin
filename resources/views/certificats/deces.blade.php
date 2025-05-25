@@ -24,6 +24,7 @@
             justify-content: space-between;
             align-items: flex-start;
             z-index: 1;
+            position: relative;
         }
 
         .left {
@@ -35,11 +36,6 @@
             height: auto;
         }
 
-        .center {
-            text-align: center;
-            margin-top: 20px;
-        }
-
         .right {
             width: 40%;
             text-align: right;
@@ -48,13 +44,50 @@
 
         .content {
             margin-top: 60px;
+            position: relative;
             z-index: 1;
+        }
+
+        .title {
+            text-align: center;
+            text-decoration: underline;
+            font-size: 20px;
+            margin-bottom: 40px;
+        }
+
+        .signature-block {
+            margin-top: 80px;
+            text-align: right;
+        }
+
+        .signature-block img {
+            width: 150px;
+            height: auto;
+            margin-top: 10px;
+        }
+
+        .timbre {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 100px;
+            height: auto;
+            z-index: 2;
+        }
+
+        p {
+            line-height: 1.6;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
+    {{-- Arrière-plan discret --}}
     <img src="{{ public_path('images/armoirie.png') }}" class="background" alt="Armoirie de la Côte d'Ivoire">
+
+    {{-- Timbre officiel --}}
+    <img src="{{ $timbre }}" class="timbre" alt="Timbre officiel">
 
     <div class="header">
         <div class="left">
@@ -69,7 +102,7 @@
     </div>
 
     <div class="content">
-        <h2 style="text-align: center; text-decoration: underline;">Extrait d'acte de décès</h2>
+        <h2 class="title">Extrait d'acte de décès</h2>
 
         <p><strong>Nom du défunt :</strong> {{ $document->metadata['nom_defunt'] ?? '...' }}</p>
         <p><strong>Date du décès :</strong> {{ $document->metadata['date_deces'] ?? '...' }}</p>
@@ -78,7 +111,11 @@
 
         <p style="margin-top: 50px;">Fait à {{ $document->commune->nom }}, le {{ $document->traitement_date_formatted }}</p>
 
-        <p style="text-align: right; margin-top: 80px;">L’Officier d’état civil</p>
+        <div class="signature-block">
+            <p>L’Officier d’état civil</p>
+            <img src="{{ $signature }}" alt="Signature de l'agent">
+            <p>{{ $document->agent?->name ?? Auth::user()->name }}</p>
+        </div>
     </div>
 
 </body>

@@ -43,7 +43,7 @@ class AgentController extends Controller
     {
         $this->authorize('create', User::class);
 
-        $communes = Commune::orderBy('nom')->get();
+        $communes = Commune::orderBy('name')->get();
         return view('admin.agents.create', compact('communes'));
     }
 

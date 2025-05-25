@@ -35,11 +35,6 @@
             height: auto;
         }
 
-        .center {
-            text-align: center;
-            margin-top: 20px;
-        }
-
         .right {
             width: 40%;
             text-align: right;
@@ -50,11 +45,33 @@
             margin-top: 60px;
             z-index: 1;
         }
+
+        .signature-block {
+            margin-top: 60px;
+            text-align: right;
+        }
+
+        .signature-block img {
+            width: 150px;
+            height: auto;
+        }
+
+        .timbre {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 100px;
+            height: auto;
+        }
     </style>
 </head>
 <body>
 
+    <!-- Arrière-plan discret -->
     <img src="{{ public_path('images/armoirie.png') }}" class="background" alt="Armoirie de la Côte d'Ivoire">
+
+    <!-- Timbre officiel -->
+    <img src="{{ $timbre }}" class="timbre" alt="Timbre officiel">
 
     <div class="header">
         <div class="left">
@@ -78,7 +95,11 @@
 
         <p style="margin-top: 50px;">Fait à {{ $document->commune->nom }}, le {{ $document->traitement_date_formatted }}</p>
 
-        <p style="text-align: right; margin-top: 80px;">L’Officier d’état civil</p>
+        <div class="signature-block">
+            <p>L’Officier d’état civil</p>
+            <img src="{{ $signature }}" alt="Signature de l'agent">
+            <p>{{ $document->agent?->name ?? Auth::user()->name }}</p>
+        </div>
     </div>
 
 </body>
