@@ -1,56 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <meta charset="utf-8">
-    <title>Document Approuvé</title>
-    <style>
-        body { font-family: DejaVu Sans, sans-serif; }
-        h1 { color: #2e6da4; }
-        .signature { margin-top: 30px; }
-        .section { margin-bottom: 20px; }
-        .label { font-weight: bold; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Certificat de Décès</title>
+  <style>
+    body {
+      font-family: "Times New Roman", serif;
+      margin: 40px;
+      line-height: 1.6;
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 2px solid black;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .header h1, .header h2 {
+      margin: 0;
+    }
+
+    .info-section {
+      margin: 30px 0;
+    }
+
+    .signature {
+      margin-top: 60px;
+      text-align: right;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 50px;
+    }
+
+    .uppercase {
+      text-transform: uppercase;
+    }
+
+    .bold {
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-    <h1>Document approuvé</h1>
 
-    <div class="section">
-        <p><span class="label">Numéro registre :</span> {{ $document->registry_number }}</p>
-        <p><span class="label">Page :</span> {{ $document->registry_page }}</p>
-        <p><span class="label">Volume :</span> {{ $document->registry_volume }}</p>
-        <p><span class="label">Date de décision :</span> {{ $document->decision_date }}</p>
-    </div>
+  <div class="header">
+    <h1 class="uppercase">République de Côte d’Ivoire</h1>
+    <h2>Union – Discipline – Travail</h2>
+    <h2 class="uppercase">Mairie de [Nom de la commune]</h2>
+    <p class="bold">Service de l’État Civil</p>
+  </div>
 
-    <div class="section">
-        <h2>Détails du document ({{ ucfirst($document->type->value) }})</h2>
+  <h2 style="text-align:center; text-decoration: underline;">Certificat de Décès</h2>
 
-        @php $data = $document->metadata; @endphp
+  <div class="info-section">
+    <p>Le Maire de la commune de <span class="bold">[Nom de la commune]</span>,</p>
 
-        @if($document->type->value === 'naissance')
-            <p><span class="label">Nom de l'enfant :</span> {{ $data['nom_enfant'] ?? '-' }}</p>
-            <p><span class="label">Date de naissance :</span> {{ $data['date_naissance'] ?? '-' }}</p>
-            <p><span class="label">Lieu de naissance :</span> {{ $data['lieu_naissance'] ?? '-' }}</p>
-            <p><span class="label">Nom du père :</span> {{ $data['nom_pere'] ?? '-' }}</p>
-            <p><span class="label">Nom de la mère :</span> {{ $data['nom_mere'] ?? '-' }}</p>
+    <p>Certifie que selon les registres de l’état civil :</p>
 
-        @elseif($document->type->value === 'mariage')
-            <p><span class="label">Nom époux :</span> {{ $data['nom_epoux'] ?? '-' }}</p>
-            <p><span class="label">Nom épouse :</span> {{ $data['nom_epouse'] ?? '-' }}</p>
-            <p><span class="label">Date du mariage :</span> {{ $data['date_mariage'] ?? '-' }}</p>
-            <p><span class="label">Lieu du mariage :</span> {{ $data['lieu_mariage'] ?? '-' }}</p>
+    <ul>
+      <li>Nom & Prénom(s) du défunt : <span class="bold">[NOM COMPLET]</span></li>
+      <li>Date de naissance : <span class="bold">[JJ/MM/AAAA]</span></li>
+      <li>Lieu de naissance : <span class="bold">[Ville, Pays]</span></li>
+      <li>Date du décès : <span class="bold">[JJ/MM/AAAA]</span></li>
+      <li>Lieu du décès : <span class="bold">[Ville, Pays]</span></li>
+      <li>Profession du défunt : <span class="bold">[Profession]</span></li>
+      <li>Nom du père : <span class="bold">[Nom complet du père]</span></li>
+      <li>Nom de la mère : <span class="bold">[Nom complet de la mère]</span></li>
+    </ul>
 
-        @elseif($document->type->value === 'deces')
-            <p><span class="label">Nom défunt :</span> {{ $data['nom_defunt'] ?? '-' }}</p>
-            <p><span class="label">Date du décès :</span> {{ $data['date_deces'] ?? '-' }}</p>
-            <p><span class="label">Lieu du décès :</span> {{ $data['lieu_deces'] ?? '-' }}</p>
-        @endif
-    </div>
+    <p>Ce certificat est délivré pour servir et valoir ce que de droit.</p>
+  </div>
 
-    @if($document->agent && $document->agent->signature_path)
-        <div class="signature">
-            <p><span class="label">Signature de l’agent :</span></p>
-            <img src="{{ public_path($document->agent->signature_path) }}" width="150">
-        </div>
-    @endif
+  <div class="signature">
+    <p>Fait à <span class="bold">[Ville]</span>, le <span class="bold">[JJ/MM/AAAA]</span></p>
+    <p>Le Maire</p>
+    <br><br><br>
+    <p class="bold">[Nom du Maire]</p>
+  </div>
+
+  <div class="footer">
+    <p><em>Téléphone : [Numéro] – Email : [adresse@mail.ci]</em></p>
+    <p><em>Adresse : [Adresse physique de la mairie]</em></p>
+  </div>
+
 </body>
 </html>

@@ -4,108 +4,7 @@
 
 @section('content')
 
-    <style>
-        .stats-card {
-            transition: transform 0.2s;
-        }
-        .stats-card:hover {
-            transform: translateY(-2px);
-        }
-        .stats-icon {
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-        }
-        .view-all {
-            color: #3b82f6;
-            text-decoration: none;
-        }
-        .view-all:hover {
-            color: #2563eb;
-            text-decoration: underline;
-        }
-        .list-group-item {
-            border-left: 0;
-            border-right: 0;
-        }
-        .list-group-item:first-child {
-            border-top: 0;
-        }
-        .list-group-item:last-child {
-            border-bottom: 0;
-        }
-    </style>
-
-<div id="content" class="content">
-    <!-- Topbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container-fluid">
-            <button type="button" id="sidebarCollapse" class="btn">
-                <i class="bi bi-list text-primary"></i>
-            </button>
-            <div class="d-flex">
-                <div class="nav-search position-relative d-none d-md-block">
-                    <input type="text" class="form-control" placeholder="Rechercher..." aria-label="Recherche">
-                    <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3" aria-hidden="true"></i>
-                </div>
-                <div class="ms-3 d-flex align-items-center">
-                    <div class="dropdown">
-                        <a href="#" class="position-relative" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Notifications">
-                            <i class="bi bi-bell fs-5"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                3
-                            </span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown">
-                            <li><h6 class="dropdown-header">Notifications</h6></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item notification-item" href="#">
-                                    <div class="notification-icon bg-primary">
-                                        <i class="bi bi-person-plus text-white"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <p class="notification-text mb-0">Nouvel agent créé à Abidjan</p>
-                                        <small class="notification-time text-muted">Il y a 10 minutes</small>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item notification-item" href="#">
-                                    <div class="notification-icon bg-warning">
-                                        <i class="bi bi-exclamation-triangle text-white"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <p class="notification-text mb-0">Pic de demandes à Yamoussoukro</p>
-                                        <small class="notification-time text-muted">Il y a 30 minutes</small>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item notification-item" href="#">
-                                    <div class="notification-icon bg-info">
-                                        <i class="bi bi-graph-up text-white"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <p class="notification-text mb-0">Rapport mensuel disponible</p>
-                                        <small class="notification-time text-muted">Il y a 1 heure</small>
-                                    </div>
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-center view-all" href="#">Voir toutes les notifications</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-   <div class="wrapper">
-        <div class="container-fluid px-4 py-4" id="main-content">
+<div class="container-fluid px-4 py-4" id="main-content">
             <!-- Header Section -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -114,8 +13,7 @@
                 </div>
             </div>
 
-         <!-- Statistiques Globales -->
-      <!-- Stats Cards Row -->
+            <!-- Statistiques Globales -->
             <div class="row mb-4">
                 <!-- Agents Card -->
                 <div class="col-md-6 col-lg-3 mb-4">
@@ -214,10 +112,10 @@
                 </div>
             </div>
 
-    <!-- Tableau Performance & Derniers Agents -->
-    <div class="row">
-        <!-- Tableau Performance -->
-        <div class="col-lg-8 mb-4">
+            <!-- Tableau Performance & Derniers Agents -->
+            <div class="row">
+                <!-- Tableau Performance -->
+                <div class="col-lg-8 mb-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                             <h5 class="mb-0">Performance par Région</h5>
@@ -351,8 +249,8 @@
                     </div>
                 </div>
 
-        <!-- Derniers Agents -->
-        <div class="col-lg-4 mb-4">
+                <!-- Derniers Agents -->
+                <div class="col-lg-4 mb-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                             <h5 class="mb-0">Gestion des Agents</h5>
@@ -364,7 +262,7 @@
                             <div class="list-group list-group-flush">
                                 <div class="list-group-item">
                                     <div class="d-flex align-items-center">
-                                        <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100" 
+                                        <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100"
                                              alt="Agent" class="rounded-circle" width="40" height="40">
                                         <div class="ms-3">
                                             <h6 class="mb-0">Kouamé Aya</h6>
@@ -377,7 +275,7 @@
                                 </div>
                                 <div class="list-group-item">
                                     <div class="d-flex align-items-center">
-                                        <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100" 
+                                        <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100"
                                              alt="Agent" class="rounded-circle" width="40" height="40">
                                         <div class="ms-3">
                                             <h6 class="mb-0">Traoré Ibrahim</h6>
@@ -390,7 +288,7 @@
                                 </div>
                                 <div class="list-group-item">
                                     <div class="d-flex align-items-center">
-                                        <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100" 
+                                        <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100"
                                              alt="Agent" class="rounded-circle" width="40" height="40">
                                         <div class="ms-3">
                                             <h6 class="mb-0">Koffi Marc</h6>
@@ -403,7 +301,7 @@
                                 </div>
                                 <div class="list-group-item">
                                     <div class="d-flex align-items-center">
-                                        <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100" 
+                                        <img src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100"
                                              alt="Agent" class="rounded-circle" width="40" height="40">
                                         <div class="ms-3">
                                             <h6 class="mb-0">Bamba Fatou</h6>
@@ -421,10 +319,10 @@
                         </div>
                     </div>
                 </div>
-    </div>
+            </div>
 
-    <!-- Graphiques -->
-    <div class="row">
+            <!-- Graphiques -->
+            <div class="row">
                 <div class="col-lg-6 mb-4">
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-white py-3">
@@ -445,9 +343,8 @@
                         </div>
                     </div>
                 </div>
+            </div>
         </div>
-</div>
-
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {

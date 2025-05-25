@@ -44,67 +44,57 @@ class DocumentAdminController extends Controller
         $validated = $request->validate([
             'type' => 'required|in:naissance,mariage,deces',
             'registry_page' => 'nullable|integer',
-            'registry_volume' => 'nullable|string',
-            'justificatif' => 'required|file',
+            'registry_volume' => 'nullable|string|max:255',
+            'justificatif' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'traitement_date' => 'required|date',
         ]);
 
-        // Ajout automatique de l'utilisateur connecté et de sa commune
         $validated['user_id'] = Auth::id();
         $validated['commune_id'] = Auth::user()->commune_id;
 
-        // Génération du numéro d’enregistrement
-        $registryNumber = strtoupper(substr($validated['type'], 0, 3)) . '-' . now()->format('Ymd-His') . '-' . Str::random(4);
+        $validated['registry_number'] = strtoupper(substr($validated['type'], 0, 3)) . '-' . now()->format('Ymd-His') . '-' . Str::random(4);
+        $validated['justificatif_path'] = $request->file('justificatif')->store('justificatifs', 'public');
 
-        // Upload du fichier justificatif
-        $justificatifPath = $request->file('justificatif')->store('justificatifs', 'public');
-
-        // Metadata selon le type
+        // Construction des métadonnées selon le type de document
         $metadata = match ($validated['type']) {
-            'naissance' => [
-                'nom_enfant' => $request->input('nom_enfant'),
-                'date_naissance' => $request->input('date_naissance'),
-                'lieu_naissance' => $request->input('lieu_naissance'),
-                'nom_pere' => $request->input('nom_pere'),
-                'nom_mere' => $request->input('nom_mere'),
-            ],
-            'mariage' => [
-                'nom_epoux' => $request->input('nom_epoux'),
-                'nom_epouse' => $request->input('nom_epouse'),
-                'date_mariage' => $request->input('date_mariage'),
-                'lieu_mariage' => $request->input('lieu_mariage'),
-            ],
-            'deces' => [
-                'nom_defunt' => $request->input('nom_defunt'),
-                'date_deces' => $request->input('date_deces'),
-                'lieu_deces' => $request->input('lieu_deces'),
-            ],
+            'naissance' => $request->only(['nom_enfant', 'date_naissance', 'lieu_naissance', 'nom_pere', 'nom_mere']),
+            'mariage' => $request->only(['nom_epoux', 'nom_epouse', 'date_mariage', 'lieu_mariage']),
+            'deces' => $request->only(['nom_defunt', 'date_deces', 'lieu_deces']),
         };
 
-        Document::create([
-            ...$validated,
-            'registry_number' => $registryNumber,
-            'justificatif_path' => $justificatifPath,
-            'metadata' => $metadata,
-        ]);
+        $validated['metadata'] = $metadata;
 
-        return redirect()->route('agent.documents.index')->with('success', 'Document créé avec succès');
+        Document::create($validated);
+
+        return redirect()->route('agent.documents.index')->with('success', 'Document créé avec succès.');
     }
 
     public function showDocument(Document $document)
     {
+    
+        $this->authorizeDocument($document);
+
         return view('agent.documents.show', compact('document'));
     }
 
     public function approve(Document $document)
     {
+        $this->authorizeDocument($document);
+
         $document->update([
             'status' => DocumentStatus::APPROUVEE,
             'agent_id' => auth()->id(),
             'decision_date' => now(),
         ]);
 
-        $pdf = Pdf::loadView('agent.documents.pdf', compact('document'));
+        $view = match ($document->type->value) { // Utilisez ->value pour les enums
+            'naissance' => 'certificats.naissance',
+            'mariage'   => 'certificats.mariage',
+            'deces'     => 'certificats.deces',
+            default     => throw new \InvalidArgumentException('Type de document inconnu: '.$document->type->value),
+        };
+
+        $pdf = Pdf::loadView($view, ['document' => $document]);
         $filename = 'acte-' . $document->registry_number . '.pdf';
 
         Storage::put('public/documents/' . $filename, $pdf->output());
@@ -118,6 +108,8 @@ class DocumentAdminController extends Controller
 
     public function reject(Request $request, Document $document)
     {
+        $this->authorizeDocument($document);
+
         $validated = $request->validate([
             'comments' => 'required|string|max:500',
         ]);
@@ -132,16 +124,35 @@ class DocumentAdminController extends Controller
 
     public function generatePdf(Document $document)
     {
-        $pdf = Pdf::loadView('admin.documents.pdf', compact('document'));
+        $this->authorizeDocument($document);
+
+        $document->decision_date_formatted = $document->decision_date
+            ? $document->decision_date->format('d/m/Y')
+            : 'Non spécifiée';
+
+        $pdf = Pdf::loadView('documents.official', [
+            'document' => $document
+        ]);
+
         return $pdf->download("acte-{$document->registry_number}.pdf");
     }
 
     public function rejectDocument(Document $document)
     {
-        $document->status = DocumentStatus::REJETEE->value;
-        $document->save();
+        $this->authorizeDocument($document);
+
+        $document->update([
+            'status' => DocumentStatus::REJETEE,
+        ]);
 
         return redirect()->route('agent.documents.index')
             ->with('success', 'Le document a été rejeté.');
+    }
+
+    private function authorizeDocument(Document $document)
+    {
+        if ($document->commune_id !== auth()->user()->commune_id) {
+            abort(403, 'Vous n’êtes pas autorisé à accéder à ce document.');
+        }
     }
 }
