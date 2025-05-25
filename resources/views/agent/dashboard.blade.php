@@ -618,12 +618,6 @@
             Rejetés
           </a>
         </li>
-        <li>
-          <a href="#" id="settings-link">
-            <i class="bi bi-gear"></i>
-            Paramètres
-          </a>
-        </li>
       </ul>
       <div class="sidebar-footer">
         <a href="#" id="logout-link">
