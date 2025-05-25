@@ -17,17 +17,24 @@ const mockRequests = [
     notes: "Le demandeur a besoin du document rapidement pour une démarche administrative.",
     documents: [
       {
-        name: "Pièce d'identité",
+        name: "Pièce d'identité recto",
         type: "image/jpeg",
         size: "1.2 MB",
         uploadDate: "2023-05-15"
       },
       {
-        name: "Justificatif de domicile",
+        name: "Pièce d'identité verso",
+        type: "application/pdf",
+        size: "0.8 MB",
+        uploadDate: "2023-05-15"
+      },
+      {
+        name: "Photo d'extrait de naissance lisible",
         type: "application/pdf",
         size: "0.8 MB",
         uploadDate: "2023-05-15"
       }
+
     ],
     history: [
       {
