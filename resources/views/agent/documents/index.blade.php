@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+<div class="container-fluid py-4 px-3 px-sm-4 px-lg-5">
     <h1 class="text-2xl font-bold text-gray-800 mb-6">Liste des documents</h1>
 
     <div class="mb-4 text-end">
@@ -11,7 +11,7 @@
         </a>
     </div>
 
-    <div class="bg-primary shadow-md rounded-lg p-6">
+    <div class="bg-white shadow-md rounded-lg p-6">
         <!-- Filtres -->
         <form method="GET" action="{{ route('agent.documents.index') }}" class="flex flex-wrap gap-4 items-center mb-6">
             <div>
@@ -60,7 +60,8 @@
                             <td class="hidden md:table-cell">{{ $document->agent->nom ?? '-' }}</td>
                             <td>{{ $document->created_at->format('d/m/Y') }}</td>
                             <td >
-                                <a href="{{ route('agent.documents.show', $document) }}">
+                                
+                                <a href="{{ route('agent.documents.show', $document) }}" class="btn btn-outline-dark" >
                                     Voir
                                 </a>
 
@@ -69,7 +70,7 @@
                                         @csrf
                                         <button type="submit"
                                                 class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
-                                                onclick="return confirm('Confirmer l’approbation de ce document ?')">
+                                                onclick="return confirm('Confirmer l’pprobation de ce document ?')">
                                             ✓
                                         </button>
                                     </form>
