@@ -19,9 +19,10 @@
             <div class="col-md-6">
                 @if($document->type->value === 'naissance')
                     <h5>Détails naissance</h5>
-                    <p><strong>Nom enfant :</strong> {{ $document->metadata['nom_enfant'] }}</p>
-                    <p><strong>Date :</strong> {{ $document->metadata['date_naissance'] }}</p>
+                    <p><strong>Nom enfant :</strong> {{ $document->metadata['nom_enfant'] ?? 'Non renseigné' }}</p>
+                    <p><strong>Date :</strong> {{ $document->metadata['date_naissance'] ?? 'Non renseignée' }}</p>
                 @endif
+
             </div>
         </div>
 

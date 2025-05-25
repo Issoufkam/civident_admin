@@ -52,4 +52,11 @@ class Document extends Model
     {
         return $this->hasMany(Attachment::class);
     }
+
+    public function getTraitementDateFormattedAttribute()
+    {
+        return $this->traitement_date
+            ? \Carbon\Carbon::parse($this->traitement_date)->format('d/m/Y')
+            : null;
+    }
 }

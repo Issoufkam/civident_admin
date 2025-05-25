@@ -224,35 +224,150 @@ class AgentController extends Controller
         return back()->with('success', 'Document rejeté');
     }
 
-    // Tableau de bord
-    public function dashboard(Request $request)
+  public function dashboard(Request $request)
+{
+    $communeId = auth()->user()->commune_id;
+    $now = now();
+    $lastMonth = $now->copy()->subMonth();
+    $lastWeek = $now->copy()->subWeek();
+
+    // Configuration des types de documents
+    $documentTypes = [
+        'naissance' => 'Extrait de naissance',
+        'mariage' => 'Acte de mariage',
+        'deces' => 'Acte de décès'
+    ];
+
+    // Filtrage des documents
+    $currentFilter = $request->get('filter', 'all');
+    $query = Document::where('commune_id', $communeId);
+
+    if ($currentFilter !== 'all') {
+        $query->where('type', $currentFilter);
+    }
+
+    $documents = $query->paginate(15);
+
+    // Récupération des statistiques
+    $statsQuery = Document::where('commune_id', $communeId)
+        ->selectRaw('COUNT(*) as total')
+        ->selectRaw('SUM(CASE WHEN status = "en_attente" THEN 1 ELSE 0 END) as en_attente')
+        ->selectRaw('SUM(CASE WHEN status = "approuvee" THEN 1 ELSE 0 END) as approuves')
+        ->selectRaw('SUM(CASE WHEN status = "rejetee" THEN 1 ELSE 0 END) as rejetes')
+        ->selectRaw('SUM(CASE WHEN type = "naissance" THEN 1 ELSE 0 END) as naissances')
+        ->selectRaw('SUM(CASE WHEN type = "mariage" THEN 1 ELSE 0 END) as mariages')
+        ->selectRaw('SUM(CASE WHEN type = "deces" THEN 1 ELSE 0 END) as deces')
+        ->first();
+
+    $stats = [
+        'total' => $statsQuery->total ?? 0,
+        'en_attente' => $statsQuery->en_attente ?? 0,
+        'approuves' => $statsQuery->approuves ?? 0,
+        'rejetes' => $statsQuery->rejetes ?? 0,
+        'naissances' => $statsQuery->naissances ?? 0,
+        'mariages' => $statsQuery->mariages ?? 0,
+        'deces' => $statsQuery->deces ?? 0,
+
+        'total_last_month' => Document::where('commune_id', $communeId)
+                                ->where('created_at', '>=', $lastMonth)
+                                ->count(),
+        'en_attente_last_week' => Document::where('commune_id', $communeId)
+                                    ->where('status', 'en_attente')
+                                    ->where('created_at', '>=', $lastWeek)
+                                    ->count(),
+        'approuves_last_month' => Document::where('commune_id', $communeId)
+                                    ->where('status', 'approuvee')
+                                    ->where('created_at', '>=', $lastMonth)
+                                    ->count(),
+        'rejetes_last_month' => Document::where('commune_id', $communeId)
+                                    ->where('status', 'rejetee')
+                                    ->where('created_at', '>=', $lastMonth)
+                                    ->count(),
+    ];
+
+    // Calcul des pourcentages
+    $stats['total_change'] = $this->calculatePercentageChange(
+        $stats['total'] - $stats['total_last_month'],
+        $stats['total_last_month']
+    );
+
+    $stats['pending_change'] = $this->calculatePercentageChange(
+        $stats['en_attente'] - $stats['en_attente_last_week'],
+        $stats['en_attente_last_week']
+    );
+
+    $stats['approved_change'] = $this->calculatePercentageChange(
+        $stats['approuves'] - $stats['approuves_last_month'],
+        $stats['approuves_last_month']
+    );
+
+    $stats['rejected_change'] = $this->calculatePercentageChange(
+        $stats['rejetes'] - $stats['rejetes_last_month'],
+        $stats['rejetes_last_month']
+    );
+
+    // Préparation des données pour les graphiques
+    $monthlyLabels = [];
+    $monthlyData = [];
+
+    for ($i = 5; $i >= 0; $i--) {
+        $date = $now->copy()->subMonths($i);
+        $monthlyLabels[] = $date->translatedFormat('M Y');
+        $monthlyData[] = Document::where('commune_id', $communeId)
+            ->whereYear('created_at', $date->year)
+            ->whereMonth('created_at', $date->month)
+            ->count();
+    }
+
+    $chartData = [
+        'typeChart' => [
+            'labels' => array_values($documentTypes),
+            'data' => [
+                $stats['naissances'] ?? 0,
+                $stats['mariages'] ?? 0,
+                $stats['deces'] ?? 0
+            ],
+            'colors' => ['#4e73df', '#1cc88a', '#36b9cc']
+        ],
+        'activityChart' => [
+            'labels' => $monthlyLabels,
+            'data' => $monthlyData
+        ]
+    ];
+
+    // Récupération des demandes
+    $recentDemandes = Document::with(['user', 'commune'])
+        ->where('commune_id', $communeId)
+        ->latest()
+        ->take(5)
+        ->get();
+
+    $urgentDemandes = Document::where('commune_id', $communeId)
+        ->where('status', 'en_attente')
+        ->where('created_at', '<', $now->subDays(3))
+        ->with(['user', 'commune'])
+        ->get();
+
+    return view('agent.dashboard', [
+        'recentDemandes' => $recentDemandes,
+        'urgentDemandes' => $urgentDemandes,
+        'documentTypes' => $documentTypes,
+        'currentFilter' => $currentFilter,
+        'documents' => $documents,
+        'stats' => $stats,
+        'chartData' => $chartData,
+        'monthlyLabels' => $monthlyLabels,
+        'monthlyData' => $monthlyData,
+        'chartData' => $chartData
+    ]);
+}
+
+    private function calculatePercentageChange($difference, $original)
     {
-        // Statistiques de base
-        $stats = [
-            'total' => Document::count(),
-            'en_attente' => Document::where('status', 'en_attente')->count(),
-            'approuves' => Document::where('status', 'approuvee')->count(),
-            'rejetes' => Document::where('status', 'rejetee')->count(),
-
-            // Répartition par type
-            'naissances' => Document::where('type', 'naissance')->count(),
-            'mariages' => Document::where('type', 'mariage')->count(),
-            'deces' => Document::where('type', 'deces')->count(),
-        ];
-
-        // Demandes récentes
-        $recentDemandes = Document::with(['user', 'commune'])
-            ->latest()
-            ->take(10)
-            ->get();
-
-        // Demandes urgentes (en attente depuis plus de 3 jours)
-        $urgentDemandes = Document::where('status', 'en_attente')
-            ->where('created_at', '<', now()->subDays(3))
-            ->with(['user', 'commune'])
-            ->get();
-
-        return view('admin.dashboard', compact('stats', 'recentDemandes', 'urgentDemandes'));
+        if ($original == 0) {
+            return 0; // Éviter la division par zéro
+        }
+        return round(($difference / $original) * 100);
     }
 
     // Gestion des régions
