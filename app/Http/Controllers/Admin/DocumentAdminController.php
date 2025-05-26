@@ -136,9 +136,11 @@ class DocumentAdminController extends Controller
     {
         return match ($type) {
             'naissance' => [
-                'nom_enfant' => 'required|string|max:255',
+                'nom_enfant' => 'required|string|max:25',
+                'prenoms_enfant' =>'required|string|max:50',
                 'date_naissance' => 'required|date',
-                'lieu_naissance' => 'required|string|max:255',
+                'sexe' =>'required|string|max:8',
+                'lieu_naissance' => 'required|string|max:50',
                 'nom_pere' => 'required|string|max:255',
                 'nom_mere' => 'required|string|max:255',
             ],
@@ -149,7 +151,8 @@ class DocumentAdminController extends Controller
                 'lieu_mariage' => 'required|string|max:255',
             ],
             'deces' => [
-                'nom_defunt' => 'required|string|max:255',
+                'nom_defunt' => 'required|string|max:25',
+                'prenom_defunt' => 'required|string|max:50',
                 'date_deces' => 'required|date',
                 'lieu_deces' => 'required|string|max:255',
             ],
@@ -177,7 +180,7 @@ class DocumentAdminController extends Controller
     {
         return match ($type) {
             'naissance' => array_filter($requestData, fn($key) => in_array($key, [
-                'nom_enfant', 'date_naissance', 'lieu_naissance', 'nom_pere', 'nom_mere'
+                'nom_enfant', 'date_naissance', 'lieu_naissance', 'nom_pere', 'nom_mere','prenom_enfant','sexe'
             ]), ARRAY_FILTER_USE_KEY),
             'mariage' => array_filter($requestData, fn($key) => in_array($key, [
                 'nom_epoux', 'nom_epouse', 'date_mariage', 'lieu_mariage'
