@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CommuneAdminController;
 use App\Http\Controllers\Admin\DocumentAdminController;
 use App\Models\Commune;
 
+
 Auth::routes();
 
 // // Redirection racine vers la page de login
@@ -85,9 +86,11 @@ Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->grou
         Route::get('/create', [DocumentAdminController::class, 'create'])->name('create');
         Route::post('/', [DocumentAdminController::class, 'store'])->name('store');
         Route::get('/{document}', [DocumentAdminController::class, 'showDocument'])->name('show');
-        Route::post('/{document}/approve', [DocumentAdminController::class, 'approve'])->name('approve'); // ✅ nom correct
+        Route::post('/{document}/approve', [DocumentAdminController::class, 'approve'])->name('approve');
         Route::post('/{document}/reject', [DocumentAdminController::class, 'rejectDocument'])->name('reject');
         Route::get('/{document}/pdf', [DocumentAdminController::class, 'generateDocumentPdf'])->name('pdf');
+        Route::get('/{document}/duplicate', [DocumentAdminController::class,'generateDuplicata'])->name('duplicata');
+
     });
 });
 
