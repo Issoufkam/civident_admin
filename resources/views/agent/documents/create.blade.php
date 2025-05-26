@@ -39,6 +39,11 @@
             <label>Nom de l'enfant :</label>
             <input type="text" name="nom_enfant">
 
+            <label>Prénom de l'enfant :</label>
+            <input type="text" name="prenom_enfant">
+
+            <label>Sexe :</label>
+            <input type="text" name="sexe">
             <label>Date de naissance :</label>
             <input type="date" name="date_naissance">
 

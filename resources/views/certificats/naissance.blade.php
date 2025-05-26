@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extrait d'Acte de Naissance - République de Côte d'Ivoire</title>
-
-    <!-- Import de la police -->
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
-
     <style>
-        /* RESET */
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@400;700&display=swap');
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -40,7 +37,7 @@
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .certificate::before {
@@ -57,13 +54,14 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
+            position: relative;
         }
 
         .republic {
             font-size: 14px;
             text-transform: uppercase;
-            font-weight: bold;
             margin-bottom: 5px;
+            font-weight: bold;
         }
 
         .motto {
@@ -76,7 +74,7 @@
             width: 80px;
             height: 80px;
             margin: 0 auto 15px;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Coat_of_arms_of_Ivory_Coast.svg/800px-Coat_of_arms_of_Ivory_Coast.svg.png');
+            background-image: url('{{ public_path('images/armoirie.png') }}');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -87,30 +85,15 @@
             font-size: 24px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            font-weight: 700;
             margin-bottom: 5px;
+            font-weight: 700;
         }
 
         .subtitle {
             font-size: 16px;
+            margin-bottom: 20px;
             font-weight: 600;
-            margin-bottom: 20px;
         }
-
-        .flag-colors {
-            display: flex;
-            height: 10px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .flag-colors div {
-            flex: 1;
-        }
-
-        .color-orange { background-color: #F77F00; }
-        .color-white  { background-color: #FFFFFF; }
-        .color-green  { background-color: #009A44; }
 
         .registry-info {
             display: flex;
@@ -126,8 +109,8 @@
 
         .section-title {
             font-weight: bold;
-            font-size: 14px;
             margin-bottom: 5px;
+            font-size: 14px;
         }
 
         .info-container {
@@ -179,6 +162,10 @@
             text-align: center;
             transform: rotate(-15deg);
             margin-left: auto;
+            background-image: url('{{ $timbre }}');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
 
         .signature {
@@ -219,6 +206,22 @@
             font-weight: bold;
         }
 
+        .flag-colors {
+            display: flex;
+            height: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .flag-colors div {
+            flex: 1;
+            height: 100%;
+        }
+
+        .color-orange { background-color: #F77F00; }
+        .color-white { background-color: #FFFFFF; }
+        .color-green { background-color: #009A44; }
+
         @media (max-width: 600px) {
             .certificate {
                 padding: 20px;
@@ -232,9 +235,21 @@
                 min-width: 100%;
             }
 
-            .registry-info {
-                flex-direction: column;
-                gap: 15px;
+             .registry-info {
+                display: flex;
+                justify-content: space-between;
+                flex-wrap: wrap; /* facultatif, si vous voulez qu'il passe à la ligne sur petits écrans */
+                gap: 20px; /* espace entre les colonnes */
+            }
+
+            .registry-info > div {
+                flex: 1;
+                min-width: 200px; /* contrôle la largeur minimale pour éviter que ça se tasse trop */
+            }
+
+            .section-title {
+                font-weight: bold;
+                text-transform: uppercase;
             }
 
             .official-section {
@@ -251,7 +266,7 @@
 </head>
 <body>
     <div class="certificate">
-        <div class="document-number">N° 00-0000/2023</div>
+        <div class="document-number">{{ $document->registry_number }}</div>
         <div class="watermark">CÔTE D'IVOIRE</div>
 
         <div class="header">
@@ -270,11 +285,11 @@
         <div class="registry-info">
             <div>
                 <div class="section-title">CENTRE D'ÉTAT CIVIL</div>
-                <div>Commune {{ $document->commune->nom }}</div>
+                <div>Commune de {{ $document->commune->nom }}</div>
             </div>
             <div>
                 <div class="section-title">ANNÉE</div>
-                <div>2023</div>
+                <div>{{ $document->created_at->format('Y') }}</div>
             </div>
             <div>
                 <div class="section-title">REGISTRE</div>
@@ -282,7 +297,7 @@
             </div>
             <div>
                 <div class="section-title">NUMÉRO</div>
-                <div>0246/2023</div>
+                <div>{{ $document->registry_number }}</div>
             </div>
         </div>
 
@@ -294,18 +309,17 @@
                 </div>
                 <div class="info-field">
                     <div class="info-label">PRÉNOMS</div>
-                    <div class="info-value">{{ $document->metadata['prenom_enfant'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">-</div>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">SEXE</div>
-                    <div class="info-value">{{ $document->metadata['sexe'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">-</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">DATE DE NAISSANCE</div>
-                    <h6>{{ dateEnLettres($document->metadata['date_naissance'] ?? null) }}</h6>
                     <div class="info-value">{{ \Carbon\Carbon::parse($document->metadata['date_naissance'] ?? null)->format('d/m/Y') ?? 'Non renseignée' }}</div>
                 </div>
             </div>
@@ -313,7 +327,7 @@
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">HEURE DE NAISSANCE</div>
-                    <div class="info-value">08h45</div>
+                    <div class="info-value">-</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">LIEU DE NAISSANCE</div>
@@ -327,18 +341,37 @@
                     <div class="info-value">{{ $document->metadata['nom_pere'] ?? 'Non renseigné' }}</div>
                 </div>
                 <div class="info-field">
+                    <div class="info-label">PROFESSION DU PÈRE</div>
+                    <div class="info-value">-</div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-field">
                     <div class="info-label">MÈRE - NOM ET PRÉNOMS</div>
                     <div class="info-value">{{ $document->metadata['nom_mere'] ?? 'Non renseigné' }}</div>
+                </div>
+                <div class="info-field">
+                    <div class="info-label">PROFESSION DE LA MÈRE</div>
+                    <div class="info-value">-</div>
                 </div>
             </div>
         </div>
 
         <div class="official-section">
-            <div class="stamp">Timbre Officiel</div>
             <div class="signature">
-                <div class="signature-line"></div>
+                <img src="{{ $signature }}" alt="Signature" style="width: 150px; height: auto; margin-bottom: 10px;">
                 <div class="official-title">L'Officier de l'État Civil</div>
+                <div>{{ $document->agent?->name ?? Auth::user()->name }}</div>
             </div>
+
+            <div class="stamp"></div>
+        </div>
+
+        <div style="margin-top: 40px; font-size: 12px; text-align: center;">
+            Extrait conforme aux registres de l'état civil
+            <br>
+            Délivré à {{ $document->commune->nom }}, le {{ \Carbon\Carbon::parse($document->traitement_date)->translatedFormat('d F Y') }}
         </div>
     </div>
 </body>

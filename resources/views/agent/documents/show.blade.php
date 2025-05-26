@@ -13,7 +13,14 @@
                 <h5>Informations générales</h5>
                 <p><strong>Type :</strong> {{ ucfirst($document->type->value) }}</p>
                 <p><strong>Statut :</strong>
-                    <span class="badge bg-{{ $document->status === 'approuvee' ? 'success' : ($document->status === 'rejettee' ? 'danger' : 'warning') }}">
+                    @php
+                        $statusColor = match($document->status->value) {
+                            'approuvee' => 'success',
+                            'rejettee' => 'danger',
+                            default => 'warning',
+                        };
+                    @endphp
+                    <span class="badge bg-{{ $statusColor }}">
                         {{ ucfirst($document->status->value) }}
                     </span>
                 </p>
@@ -24,6 +31,9 @@
                 @if($document->type->value === 'naissance')
                     <h5>Détails de la naissance</h5>
                     <p><strong>Nom de l’enfant :</strong> {{ $document->metadata['nom_enfant'] ?? 'Non renseigné' }}</p>
+                    <p><strong>Prénom de l’enfant :</strong> {{ $document->metadata['prenom_enfant'] ?? 'Non renseigné' }}</p>
+                    <p><strong>Nom du père :</strong> {{ $document->metadata['nom_pere'] ?? 'Non renseigné' }}</p>
+                    <p><strong>Nom de la mère :</strong> {{ $document->metadata['nom_mere'] ?? 'Non renseigné' }}</p>
                     <p><strong>Date de naissance :</strong> {{ $document->metadata['date_naissance'] ?? 'Non renseignée' }}</p>
 
                 @elseif($document->type->value === 'mariage')
