@@ -74,7 +74,7 @@
             width: 80px;
             height: 80px;
             margin: 0 auto 15px;
-            background-image: url('{{ public_path('images/armoirie.png') }}');
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Coat_of_arms_of_Ivory_Coast.svg/800px-Coat_of_arms_of_Ivory_Coast.svg.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -162,10 +162,6 @@
             text-align: center;
             transform: rotate(-15deg);
             margin-left: auto;
-            background-image: url('{{ $timbre }}');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
         }
 
         .signature {
@@ -235,21 +231,9 @@
                 min-width: 100%;
             }
 
-             .registry-info {
-                display: flex;
-                justify-content: space-between;
-                flex-wrap: wrap; /* facultatif, si vous voulez qu'il passe à la ligne sur petits écrans */
-                gap: 20px; /* espace entre les colonnes */
-            }
-
-            .registry-info > div {
-                flex: 1;
-                min-width: 200px; /* contrôle la largeur minimale pour éviter que ça se tasse trop */
-            }
-
-            .section-title {
-                font-weight: bold;
-                text-transform: uppercase;
+            .registry-info {
+                flex-direction: column;
+                gap: 15px;
             }
 
             .official-section {
@@ -266,7 +250,7 @@
 </head>
 <body>
     <div class="certificate">
-        <div class="document-number">{{ $document->registry_number }}</div>
+        <div class="document-number">N° 00-0000/2023</div>
         <div class="watermark">CÔTE D'IVOIRE</div>
 
         <div class="header">
@@ -285,11 +269,11 @@
         <div class="registry-info">
             <div>
                 <div class="section-title">CENTRE D'ÉTAT CIVIL</div>
-                <div>Commune de {{ $document->commune->nom }}</div>
+                <div>Commune d'Abidjan-Plateau</div>
             </div>
             <div>
                 <div class="section-title">ANNÉE</div>
-                <div>{{ $document->created_at->format('Y') }}</div>
+                <div>2023</div>
             </div>
             <div>
                 <div class="section-title">REGISTRE</div>
@@ -297,7 +281,7 @@
             </div>
             <div>
                 <div class="section-title">NUMÉRO</div>
-                <div>{{ $document->registry_number }}</div>
+                <div>0246/2023</div>
             </div>
         </div>
 
@@ -305,73 +289,74 @@
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">NOM</div>
-                    <div class="info-value">{{ $document->metadata['nom_enfant'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">KOUASSI</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">PRÉNOMS</div>
-                    <div class="info-value">-</div>
+                    <div class="info-value">Aya Marie</div>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">SEXE</div>
-                    <div class="info-value">-</div>
+                    <div class="info-value">Féminin</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">DATE DE NAISSANCE</div>
-                    <div class="info-value">{{ \Carbon\Carbon::parse($document->metadata['date_naissance'] ?? null)->format('d/m/Y') ?? 'Non renseignée' }}</div>
+                    <div class="info-value">15 Avril 2023</div>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">HEURE DE NAISSANCE</div>
-                    <div class="info-value">-</div>
+                    <div class="info-value">08h45</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">LIEU DE NAISSANCE</div>
-                    <div class="info-value">{{ $document->metadata['lieu_naissance'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">CHU de Cocody, Abidjan</div>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">PÈRE - NOM ET PRÉNOMS</div>
-                    <div class="info-value">{{ $document->metadata['nom_pere'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">KOUASSI Koffi Jean</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">PROFESSION DU PÈRE</div>
-                    <div class="info-value">-</div>
+                    <div class="info-value">Ingénieur</div>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">MÈRE - NOM ET PRÉNOMS</div>
-                    <div class="info-value">{{ $document->metadata['nom_mere'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">DIALLO Aminata</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">PROFESSION DE LA MÈRE</div>
-                    <div class="info-value">-</div>
+                    <div class="info-value">Enseignante</div>
                 </div>
             </div>
         </div>
 
         <div class="official-section">
             <div class="signature">
-                <img src="{{ $signature }}" alt="Signature" style="width: 150px; height: auto; margin-bottom: 10px;">
+                <div class="signature-line"></div>
                 <div class="official-title">L'Officier de l'État Civil</div>
-                <div>{{ $document->agent?->name ?? Auth::user()->name }}</div>
             </div>
 
-            <div class="stamp"></div>
+            <div class="stamp">
+                Timbre Officiel
+            </div>
         </div>
 
         <div style="margin-top: 40px; font-size: 12px; text-align: center;">
             Extrait conforme aux registres de l'état civil
             <br>
-            Délivré à {{ $document->commune->nom }}, le {{ \Carbon\Carbon::parse($document->traitement_date)->translatedFormat('d F Y') }}
+            Délivré à Abidjan, le 30 Avril 2023
         </div>
     </div>
 </body>
