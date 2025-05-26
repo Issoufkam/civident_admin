@@ -57,6 +57,15 @@
         </div>
 
         {{-- Boutons d’action --}}
+        @if($document->is_duplicata)
+            <form method="POST" action="{{ route('agent.documents.duplicata', $document) }}" class="mt-3">
+                @csrf
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-clone"></i> Générer un duplicata
+                </button>
+            </form>
+        @endif
+
         <div class="mt-4">
             <form action="{{ route('agent.documents.approve', $document) }}" method="POST" class="d-inline">
                 @csrf

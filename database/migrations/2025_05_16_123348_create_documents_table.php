@@ -24,6 +24,12 @@ return new class extends Migration
             $table->foreignId('commune_id')->constrained()->onDelete('cascade');
             $table->date('traitement_date')->nullable();
             $table->foreignId('agent_id')->nullable()->constrained('users')->onDelete('set null');
+
+            // Champs pour gérer les duplicatas
+            $table->boolean('is_duplicata')->default(false);
+            $table->foreignId('original_document_id')->nullable()->constrained('documents')->onDelete('cascade');
+            $table->string('pdf_path')->nullable(); // Chemin vers le duplicata PDF généré
+
             $table->timestamps();
         });
     }

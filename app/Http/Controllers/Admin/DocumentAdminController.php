@@ -16,10 +16,15 @@ use Illuminate\Validation\Rule;
 
 class DocumentAdminController extends Controller
 {
+    // Répertoires de stockage
     private const JUSTIFICATIF_DIR = 'justificatifs';
     private const DOCUMENTS_DIR = 'documents';
     private const SIGNATURES_DIR = 'signatures';
     private const TIMBRES_DIR = 'timbres';
+
+    // ================================
+    // Section 1 : Affichage / Liste
+    // ================================
 
     public function index(Request $request)
     {
@@ -47,6 +52,34 @@ class DocumentAdminController extends Controller
         return view('agent.documents.create');
     }
 
+    public function showDocument(Document $document)
+    {
+        $this->authorizeDocument($document);
+        return view('agent.documents.show', compact('document'));
+    }
+
+    public function generatePdf(Document $document)
+    {
+        $this->authorizeDocument($document);
+
+        try {
+            $pdf = Pdf::loadView($this->getDocumentView($document), [
+                'document' => $document,
+                'signature' => $this->getAgentSignaturePath(),
+                'timbre' => $this->getTimbrePath(),
+            ]);
+
+            return $pdf->download("acte-{$document->registry_number}.pdf");
+        } catch (\Exception $e) {
+            Log::error("Erreur génération PDF: " . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la génération du PDF.');
+        }
+    }
+
+    // ================================
+    // Section 2 : Création
+    // ================================
+
     public function store(Request $request)
     {
         $validated = $this->validateDocumentRequest($request);
@@ -63,11 +96,9 @@ class DocumentAdminController extends Controller
         }
     }
 
-    public function showDocument(Document $document)
-    {
-        $this->authorizeDocument($document);
-        return view('agent.documents.show', compact('document'));
-    }
+    // ================================
+    // Section 3 : Validation / Rejet
+    // ================================
 
     public function approve(Document $document)
     {
@@ -100,25 +131,38 @@ class DocumentAdminController extends Controller
             ->with('success', 'Demande rejetée avec succès.');
     }
 
-    public function generatePdf(Document $document)
+    // ================================
+    // Section 4 : Duplicata
+    // ================================
+
+    public function createDuplicata($id)
     {
-        $this->authorizeDocument($document);
+        $original = Document::findOrFail($id);
 
-        try {
-            $pdf = Pdf::loadView($this->getDocumentView($document), [
-                'document' => $document,
-                'signature' => $this->getAgentSignaturePath(),
-                'timbre' => $this->getTimbrePath(),
-            ]);
-
-            return $pdf->download("acte-{$document->registry_number}.pdf");
-        } catch (\Exception $e) {
-            Log::error("Erreur génération PDF: " . $e->getMessage());
-            return back()->with('error', 'Erreur lors de la génération du PDF.');
+        if ($original->is_duplicata) {
+            return back()->with('error', 'Impossible de faire un duplicata d’un duplicata.');
         }
+
+        $duplicata = $original->replicate();
+        $duplicata->is_duplicata = true;
+        $duplicata->original_document_id = $original->id;
+        $duplicata->registry_number = $original->registry_number . '-DUP-' . Str::random(3);
+        $duplicata->status = DocumentStatus::EN_ATTENTE;
+        $duplicata->pdf_path = null;
+        $duplicata->decision_date = null;
+        $duplicata->agent_id = null;
+        $duplicata->created_at = now();
+        $duplicata->updated_at = now();
+        $duplicata->save();
+
+        return redirect()->route('agent.documents.show', $duplicata)
+            ->with('success', 'Duplicata créé avec succès.');
     }
 
-    // Méthodes privées helpers
+    // ================================
+    // Section 5 : Méthodes privées
+    // ================================
+
     private function validateDocumentRequest(Request $request): array
     {
         return $request->validate([
