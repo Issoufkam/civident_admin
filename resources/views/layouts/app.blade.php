@@ -587,7 +587,7 @@
         @include('layouts.nav')
         <!-- Topbar End -->
         <!-- Main Content -->
-        <div class="container-fluid px-4 py-4" id="main-content">
+        <div class="container-fluid" id="main-content ">
             <!-- Dashboard Content - will be loaded from dashboard.js -->
         </div>
 

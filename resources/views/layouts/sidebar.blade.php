@@ -1,7 +1,6 @@
     @php
         $user = Auth::user();
     @endphp
-
     <nav id="sidebar" class="sidebar">
         <div class="sidebar-header">
             <h3>{{ $user->isAdmin() ? 'Administration' : 'Mairie' }}</h3>
