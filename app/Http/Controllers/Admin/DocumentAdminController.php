@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Commune;
 use App\Enums\DocumentStatus;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -77,7 +76,6 @@ class DocumentAdminController extends Controller
         try {
             $this->updateDocumentStatus($document, DocumentStatus::APPROUVEE);
             $pdfPath = $this->generateDocumentPdf($document);
-
             $document->update(['pdf_path' => $pdfPath]);
 
             return redirect()->route('agent.documents.index')
@@ -88,7 +86,7 @@ class DocumentAdminController extends Controller
         }
     }
 
-    public function reject(Request $request, Document $document)
+    public function rejectDocument(Request $request, Document $document)
     {
         $this->authorizeDocument($document);
 
@@ -98,7 +96,8 @@ class DocumentAdminController extends Controller
 
         $this->updateDocumentStatus($document, DocumentStatus::REJETEE, $validated['comments']);
 
-        return back()->with('success', 'Demande rejetée !');
+        return redirect()->route('agent.documents.index')
+            ->with('success', 'Demande rejetée avec succès.');
     }
 
     public function generatePdf(Document $document)
@@ -137,9 +136,9 @@ class DocumentAdminController extends Controller
         return match ($type) {
             'naissance' => [
                 'nom_enfant' => 'required|string|max:25',
-                'prenoms_enfant' =>'required|string|max:50',
+                'prenom_enfant' => 'required|string|max:50',
                 'date_naissance' => 'required|date',
-                'sexe' =>'required|string|max:8',
+                'sexe' => 'required|string|max:8',
                 'lieu_naissance' => 'required|string|max:50',
                 'nom_pere' => 'required|string|max:255',
                 'nom_mere' => 'required|string|max:255',
@@ -179,15 +178,15 @@ class DocumentAdminController extends Controller
     private function extractMetadata(string $type, array $requestData): array
     {
         return match ($type) {
-            'naissance' => array_filter($requestData, fn($key) => in_array($key, [
-                'nom_enfant', 'date_naissance', 'lieu_naissance', 'nom_pere', 'nom_mere','prenom_enfant','sexe'
-            ]), ARRAY_FILTER_USE_KEY),
-            'mariage' => array_filter($requestData, fn($key) => in_array($key, [
+            'naissance' => array_intersect_key($requestData, array_flip([
+                'nom_enfant', 'prenom_enfant', 'date_naissance', 'sexe', 'lieu_naissance', 'nom_pere', 'nom_mere'
+            ])),
+            'mariage' => array_intersect_key($requestData, array_flip([
                 'nom_epoux', 'nom_epouse', 'date_mariage', 'lieu_mariage'
-            ]), ARRAY_FILTER_USE_KEY),
-            'deces' => array_filter($requestData, fn($key) => in_array($key, [
-                'nom_defunt', 'date_deces', 'lieu_deces'
-            ]), ARRAY_FILTER_USE_KEY),
+            ])),
+            'deces' => array_intersect_key($requestData, array_flip([
+                'nom_defunt', 'prenom_defunt', 'date_deces', 'lieu_deces'
+            ])),
         };
     }
 
@@ -224,9 +223,9 @@ class DocumentAdminController extends Controller
     {
         return match ($document->type->value) {
             'naissance' => 'certificats.naissance',
-            'mariage'   => 'certificats.mariage',
-            'deces'     => 'certificats.deces',
-            default     => throw new \InvalidArgumentException('Type de document inconnu'),
+            'mariage' => 'certificats.mariage',
+            'deces' => 'certificats.deces',
+            default => throw new \InvalidArgumentException('Type de document inconnu'),
         };
     }
 

@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extrait d'Acte de Naissance - République de Côte d'Ivoire</title>
-
-    <!-- Import de la police -->
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
-
     <style>
-        /* RESET */
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@400;700&display=swap');
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -40,7 +37,7 @@
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .certificate::before {
@@ -57,13 +54,14 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
+            position: relative;
         }
 
         .republic {
             font-size: 14px;
             text-transform: uppercase;
-            font-weight: bold;
             margin-bottom: 5px;
+            font-weight: bold;
         }
 
         .motto {
@@ -87,30 +85,15 @@
             font-size: 24px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            font-weight: 700;
             margin-bottom: 5px;
+            font-weight: 700;
         }
 
         .subtitle {
             font-size: 16px;
+            margin-bottom: 20px;
             font-weight: 600;
-            margin-bottom: 20px;
         }
-
-        .flag-colors {
-            display: flex;
-            height: 10px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .flag-colors div {
-            flex: 1;
-        }
-
-        .color-orange { background-color: #F77F00; }
-        .color-white  { background-color: #FFFFFF; }
-        .color-green  { background-color: #009A44; }
 
         .registry-info {
             display: flex;
@@ -126,8 +109,8 @@
 
         .section-title {
             font-weight: bold;
-            font-size: 14px;
             margin-bottom: 5px;
+            font-size: 14px;
         }
 
         .info-container {
@@ -219,6 +202,22 @@
             font-weight: bold;
         }
 
+        .flag-colors {
+            display: flex;
+            height: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .flag-colors div {
+            flex: 1;
+            height: 100%;
+        }
+
+        .color-orange { background-color: #F77F00; }
+        .color-white { background-color: #FFFFFF; }
+        .color-green { background-color: #009A44; }
+
         @media (max-width: 600px) {
             .certificate {
                 padding: 20px;
@@ -270,7 +269,7 @@
         <div class="registry-info">
             <div>
                 <div class="section-title">CENTRE D'ÉTAT CIVIL</div>
-                <div>Commune {{ $document->commune->nom }}</div>
+                <div>Commune d'Abidjan-Plateau</div>
             </div>
             <div>
                 <div class="section-title">ANNÉE</div>
@@ -290,23 +289,22 @@
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">NOM</div>
-                    <div class="info-value">{{ $document->metadata['nom_enfant'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">KOUASSI</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">PRÉNOMS</div>
-                    <div class="info-value">{{ $document->metadata['prenom_enfant'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">Aya Marie</div>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">SEXE</div>
-                    <div class="info-value">{{ $document->metadata['sexe'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">Féminin</div>
                 </div>
                 <div class="info-field">
                     <div class="info-label">DATE DE NAISSANCE</div>
-                    <h6>{{ dateEnLettres($document->metadata['date_naissance'] ?? null) }}</h6>
-                    <div class="info-value">{{ \Carbon\Carbon::parse($document->metadata['date_naissance'] ?? null)->format('d/m/Y') ?? 'Non renseignée' }}</div>
+                    <div class="info-value">15 Avril 2023</div>
                 </div>
             </div>
 
@@ -317,28 +315,48 @@
                 </div>
                 <div class="info-field">
                     <div class="info-label">LIEU DE NAISSANCE</div>
-                    <div class="info-value">{{ $document->metadata['lieu_naissance'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">CHU de Cocody, Abidjan</div>
                 </div>
             </div>
 
             <div class="info-row">
                 <div class="info-field">
                     <div class="info-label">PÈRE - NOM ET PRÉNOMS</div>
-                    <div class="info-value">{{ $document->metadata['nom_pere'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">KOUASSI Koffi Jean</div>
                 </div>
                 <div class="info-field">
+                    <div class="info-label">PROFESSION DU PÈRE</div>
+                    <div class="info-value">Ingénieur</div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-field">
                     <div class="info-label">MÈRE - NOM ET PRÉNOMS</div>
-                    <div class="info-value">{{ $document->metadata['nom_mere'] ?? 'Non renseigné' }}</div>
+                    <div class="info-value">DIALLO Aminata</div>
+                </div>
+                <div class="info-field">
+                    <div class="info-label">PROFESSION DE LA MÈRE</div>
+                    <div class="info-value">Enseignante</div>
                 </div>
             </div>
         </div>
 
         <div class="official-section">
-            <div class="stamp">Timbre Officiel</div>
             <div class="signature">
                 <div class="signature-line"></div>
                 <div class="official-title">L'Officier de l'État Civil</div>
             </div>
+
+            <div class="stamp">
+                Timbre Officiel
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; font-size: 12px; text-align: center;">
+            Extrait conforme aux registres de l'état civil
+            <br>
+            Délivré à Abidjan, le 30 Avril 2023
         </div>
     </div>
 </body>

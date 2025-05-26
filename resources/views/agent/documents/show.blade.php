@@ -201,7 +201,7 @@
     }
 </style>
 
-<div   id="requestDetailSection">
+<div  class="container-fluid py-2 px-3 px-sm-4 px-lg-5" id="requestDetailSection">
           <div class="col-12">
             <div class="detail-view">
               <div class="d-flex justify-content-between align-items-center mb-4">
