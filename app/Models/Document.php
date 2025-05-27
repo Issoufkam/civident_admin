@@ -20,13 +20,18 @@ class Document extends Model
         'justificatif_path',
         'user_id',
         'commune_id',
-        'agent_id'
+        'agent_id',
+        'traitement_date',
+        'is_duplicata',
+        'original_document_id',
+        'pdf_path',
     ];
 
     protected $casts = [
         'type' => DocumentType::class,
         'status' => DocumentStatus::class,
-        'metadata' => 'array'
+        'metadata' => 'array',
+        'is_duplicata' => 'boolean',
     ];
 
     // Citoyen demandeur
@@ -52,4 +57,30 @@ class Document extends Model
     {
         return $this->hasMany(Attachment::class);
     }
+
+    // Document original (si duplicata)
+    public function original(): BelongsTo
+    {
+        return $this->belongsTo(Document::class, 'original_document_id');
+    }
+
+    // Tous les duplicatas liés à ce document
+    public function duplicatas(): HasMany
+    {
+        return $this->hasMany(Document::class, 'original_document_id');
+    }
+
+    // Formattage de la date de traitement
+    public function getTraitementDateFormattedAttribute()
+    {
+        return $this->traitement_date
+            ? \Carbon\Carbon::parse($this->traitement_date)->format('d/m/Y')
+            : null;
+    }
+
+    public function scopeByType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
+
 }

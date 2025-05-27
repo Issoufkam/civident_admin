@@ -14,29 +14,36 @@ use App\Events\DocumentStatusUpdated;
 
 class DocumentController extends Controller
 {
-    /**
-     * Affiche la liste des documents
-     */
+    public function dashboard()
+    {
+        return view('agent.dashboard');
+    }
 
-     public function dashboard()
-     {
-        return view('admin.dashboard');
-     }
+    public function demandes()
+    {
+        $user = auth()->user();
 
+        $query = Document::with('user');
+
+        if ($user->role === UserRole::AGENT) {
+            $query->where('commune_id', $user->commune_id);
+        }
+
+        $demandes = $query->latest()->paginate(10);
+
+        return view('agent.demandes.index', compact('demandes'));
+    }
 
     public function index(Request $request)
     {
         $user = auth()->user();
 
-        $query = Document::with(['user', 'commune', 'agent'])
-            ->latest();
+        $query = Document::with(['user', 'commune', 'agent'])->latest();
 
-        // Restriction par commune pour les agents
-        if (auth()->user()->role === UserRole::AGENT) {
+        if ($user->role === UserRole::AGENT) {
             $query->where('commune_id', $user->commune_id);
         }
 
-        // Filtres de type et statut
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
@@ -55,9 +62,6 @@ class DocumentController extends Controller
         ]);
     }
 
-    /**
-     * Formulaire de création de document
-     */
     public function create()
     {
         $user = auth()->user();
@@ -70,9 +74,6 @@ class DocumentController extends Controller
         ]);
     }
 
-    /**
-     * Stockage d'un nouveau document
-     */
     public function store(Request $request)
     {
         $user = auth()->user();
@@ -86,16 +87,13 @@ class DocumentController extends Controller
             'metadata.date_acte' => ['required', 'date'],
         ]);
 
-        // Générer un numéro unique
         $registryNumber = $this->generateRegistryNumber(
             $validated['type'],
             $validated['commune_id']
         );
 
-        // Stocker le fichier
         $path = $request->file('justificatif')->store('justificatifs');
 
-        // Créer le document
         $document = Document::create([
             'type' => $validated['type'],
             'registry_number' => $registryNumber,
@@ -112,9 +110,6 @@ class DocumentController extends Controller
             ->with('success', 'Document enregistré avec succès');
     }
 
-    /**
-     * Affichage d’un document
-     */
     public function show(Document $document)
     {
         $this->authorize('view', $document);
@@ -124,9 +119,6 @@ class DocumentController extends Controller
         ]);
     }
 
-    /**
-     * Mise à jour du statut
-     */
     public function updateStatus(Request $request, Document $document)
     {
         $this->authorize('update', $document);
@@ -140,7 +132,7 @@ class DocumentController extends Controller
             'status' => $validated['status'],
             'agent_id' => auth()->id(),
             'metadata' => array_merge(
-                $document->metadata,
+                $document->metadata ?? [],
                 ['comments' => $validated['comments'] ?? null]
             )
         ]);
@@ -150,15 +142,12 @@ class DocumentController extends Controller
         return back()->with('success', 'Statut mis à jour');
     }
 
-    /**
-     * Téléchargement du justificatif
-     */
     public function downloadJustificatif(Document $document)
     {
         $this->authorize('view', $document);
 
         if (!Storage::exists($document->justificatif_path)) {
-            abort(404);
+            abort(404, 'Fichier non trouvé.');
         }
 
         return Storage::download(
@@ -167,9 +156,6 @@ class DocumentController extends Controller
         );
     }
 
-    /**
-     * Génération d’un numéro de registre
-     */
     protected function generateRegistryNumber(string $type, int $communeId): string
     {
         $commune = Commune::findOrFail($communeId);
