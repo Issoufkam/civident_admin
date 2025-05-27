@@ -16,21 +16,15 @@ use Illuminate\Validation\Rule;
 
 class DocumentAdminController extends Controller
 {
-    // Répertoires de stockage
     private const JUSTIFICATIF_DIR = 'justificatifs';
     private const DOCUMENTS_DIR = 'documents';
     private const SIGNATURES_DIR = 'signatures';
     private const TIMBRES_DIR = 'timbres';
 
-    // ================================
-    // Section 1 : Affichage / Liste
-    // ================================
-
     public function index(Request $request)
     {
         $agent = auth()->user();
         $communeId = $agent->commune_id;
-
         abort_unless($communeId, 403, "Aucune commune associée à votre profil.");
 
         $query = Document::with(['user', 'commune', 'agent'])
@@ -39,6 +33,10 @@ class DocumentAdminController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->filled('is_duplicata')) {
+            $query->where('is_duplicata', true);
         }
 
         $documents = $query->paginate(25);
@@ -76,10 +74,6 @@ class DocumentAdminController extends Controller
         }
     }
 
-    // ================================
-    // Section 2 : Création
-    // ================================
-
     public function store(Request $request)
     {
         $validated = $this->validateDocumentRequest($request);
@@ -87,18 +81,12 @@ class DocumentAdminController extends Controller
 
         try {
             Document::create($validated);
-            return redirect()->route('agent.documents.index')
-                ->with('success', 'Document créé avec succès.');
+            return redirect()->route('agent.documents.index')->with('success', 'Document créé avec succès.');
         } catch (\Exception $e) {
             Log::error("Erreur création document: " . $e->getMessage());
-            return back()->withInput()
-                ->with('error', 'Erreur lors de la création du document.');
+            return back()->withInput()->with('error', 'Erreur lors de la création du document.');
         }
     }
-
-    // ================================
-    // Section 3 : Validation / Rejet
-    // ================================
 
     public function approve(Document $document)
     {
@@ -109,8 +97,7 @@ class DocumentAdminController extends Controller
             $pdfPath = $this->generateDocumentPdf($document);
             $document->update(['pdf_path' => $pdfPath]);
 
-            return redirect()->route('agent.documents.index')
-                ->with('success', 'Demande approuvée et PDF généré avec succès !');
+            return redirect()->route('agent.documents.index')->with('success', 'Demande approuvée et PDF généré avec succès !');
         } catch (\Exception $e) {
             Log::error("Erreur approbation document: " . $e->getMessage());
             return back()->with('error', 'Erreur lors de l\'approbation du document.');
@@ -121,19 +108,12 @@ class DocumentAdminController extends Controller
     {
         $this->authorizeDocument($document);
 
-        $validated = $request->validate([
-            'comments' => 'required|string|max:500',
-        ]);
+        $validated = $request->validate(['comments' => 'required|string|max:500']);
 
         $this->updateDocumentStatus($document, DocumentStatus::REJETEE, $validated['comments']);
 
-        return redirect()->route('agent.documents.index')
-            ->with('success', 'Demande rejetée avec succès.');
+        return redirect()->route('agent.documents.index')->with('success', 'Demande rejetée avec succès.');
     }
-
-    // ================================
-    // Section 4 : Duplicata
-    // ================================
 
     public function createDuplicata($id)
     {
@@ -155,13 +135,8 @@ class DocumentAdminController extends Controller
         $duplicata->updated_at = now();
         $duplicata->save();
 
-        return redirect()->route('agent.documents.show', $duplicata)
-            ->with('success', 'Duplicata créé avec succès.');
+        return redirect()->route('agent.documents.show', $duplicata)->with('success', 'Duplicata créé avec succès.');
     }
-
-    // ================================
-    // Section 5 : Méthodes privées
-    // ================================
 
     private function validateDocumentRequest(Request $request): array
     {
@@ -207,10 +182,8 @@ class DocumentAdminController extends Controller
         $data['user_id'] = Auth::id();
         $data['commune_id'] = Auth::user()->commune_id;
         $data['registry_number'] = $this->generateRegistryNumber($data['type']);
-        $data['justificatif_path'] = $request->file('justificatif')
-            ->store(self::JUSTIFICATIF_DIR, 'public');
+        $data['justificatif_path'] = $request->file('justificatif')->store(self::JUSTIFICATIF_DIR, 'public');
         $data['metadata'] = $this->extractMetadata($data['type'], $request->all());
-
         return $data;
     }
 
@@ -283,15 +256,56 @@ class DocumentAdminController extends Controller
 
     private function getTimbrePath(): string
     {
-        return public_path('storage/' . self::TIMBRES_DIR . '/timbre_commune.png');
+        $timbreFile = self::TIMBRES_DIR . '/timbre.png';
+        return Storage::disk('public')->exists($timbreFile)
+            ? storage_path('app/public/' . $timbreFile)
+            : public_path('images/timbre-par-defaut.png');
     }
 
     private function authorizeDocument(Document $document): void
     {
-        abort_unless(
-            $document->commune_id === auth()->user()->commune_id,
-            403,
-            'Vous n’êtes pas autorisé à accéder à ce document.'
-        );
+        if ($document->commune_id !== auth()->user()->commune_id) {
+            abort(403, 'Vous n\'avez pas accès à ce document.');
+        }
+    }
+
+     public function update(Request $request, Document $document)
+    {
+        $this->authorizeDocument($document);
+
+        $validated = $this->validateDocumentRequest($request);
+
+        try {
+            $validated = $this->prepareDocumentData($validated, $request);
+
+            // Ne pas régénérer certains champs
+            unset($validated['user_id'], $validated['commune_id'], $validated['registry_number']);
+
+            // Supprimer l'ancien fichier justificatif si un nouveau est fourni
+            if ($request->hasFile('justificatif')) {
+                if ($document->justificatif_path && Storage::disk('public')->exists($document->justificatif_path)) {
+                    Storage::disk('public')->delete($document->justificatif_path);
+                }
+                $validated['justificatif_path'] = $request->file('justificatif')
+                    ->store(self::JUSTIFICATIF_DIR, 'public');
+            }
+
+            // Mise à jour
+            $document->update($validated);
+
+            return redirect()->route('agent.documents.index', $document)
+                ->with('success', 'Document mis à jour avec succès.');
+        } catch (\Exception $e) {
+            Log::error("Erreur mise à jour document: " . $e->getMessage());
+            return back()->withInput()
+                ->with('error', 'Erreur lors de la mise à jour du document.');
+        }
+    }
+
+
+    public function editDoc($id)
+    {
+        $document = Document::findOrFail($id); 
+        return view('agent.documents.edit', compact('document'));
     }
 }

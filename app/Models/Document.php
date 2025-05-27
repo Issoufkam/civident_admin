@@ -78,5 +78,9 @@ class Document extends Model
             : null;
     }
 
-    
+    public function scopeByType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
+
 }

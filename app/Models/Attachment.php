@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Attachment extends Model
 {
@@ -17,6 +18,9 @@ class Attachment extends Model
     // URL publique pour l'affichage
     public function getPublicUrlAttribute(): string
     {
-        return asset("storage/{$this->path}");
+        return Storage::exists($this->path)
+            ? asset("storage/{$this->path}")
+            : asset("images/file-not-found.png");
     }
+
 }
