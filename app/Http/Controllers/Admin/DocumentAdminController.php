@@ -88,32 +88,55 @@ class DocumentAdminController extends Controller
         }
     }
 
-    public function approve(Document $document)
+    // public function approve(Document $document)
+    // {
+    //     $this->authorizeDocument($document);
+
+    //     try {
+    //         // Mettre à jour le statut
+    //         $document->update([
+    //             'status' => DocumentStatus::APPROUVEE,
+    //             'agent_id' => auth()->id(),
+    //             'decision_date' => now()
+    //         ]);
+
+    //         // Générer le PDF
+    //         $pdf = Pdf::loadView($this->getDocumentView($document), [
+    //             'document' => $document,
+    //             'signature' => $this->getAgentSignaturePath(),
+    //             'timbre' => $this->getTimbrePath(),
+    //         ]);
+
+    //         $filename = 'acte-' . $document->registry_number . '.pdf';
+    //         $path = 'public/documents/' . $filename;
+
+    //         Storage::put($path, $pdf->output());
+
+    //         // Mettre à jour le chemin du PDF
+    //         $document->update(['pdf_path' => 'storage/documents/' . $filename]);
+
+    //         return redirect()->route('agent.documents.show', $document)
+    //             ->with('success', 'Document approuvé avec succès');
+
+    //     } catch (\Exception $e) {
+    //         Log::error("Erreur approbation document: " . $e->getMessage());
+    //         return back()->with('error', 'Erreur lors de l\'approbation du document.');
+    //     }
+    // }
+
+   public function rejectDocument(Request $request, Document $document)
     {
         $this->authorizeDocument($document);
 
-        try {
-            $this->updateDocumentStatus($document, DocumentStatus::APPROUVEE);
-            $pdfPath = $this->generateDocumentPdf($document);
-            $document->update(['pdf_path' => $pdfPath]);
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
 
-            return redirect()->route('agent.documents.index')->with('success', 'Demande approuvée et PDF généré avec succès !');
-        } catch (\Exception $e) {
-            Log::error("Erreur approbation document: " . $e->getMessage());
-            return back()->with('error', 'Erreur lors de l\'approbation du document.');
-        }
-    }
-
-    public function rejectDocument(Request $request, Document $document)
-    {
-        $this->authorizeDocument($document);
-
-        $validated = $request->validate(['comments' => 'required|string|max:500']);
-
-        $this->updateDocumentStatus($document, DocumentStatus::REJETEE, $validated['comments']);
+        $this->updateDocumentStatus($document, DocumentStatus::REJETEE, $validated['reason']);
 
         return redirect()->route('agent.documents.index')->with('success', 'Demande rejetée avec succès.');
     }
+
 
     public function createDuplicata($id)
     {
@@ -209,18 +232,14 @@ class DocumentAdminController extends Controller
 
     private function updateDocumentStatus(Document $document, DocumentStatus $status, ?string $comments = null): void
     {
-        $updateData = [
+        $document->update([
             'status' => $status,
             'agent_id' => auth()->id(),
             'decision_date' => now(),
-        ];
-
-        if ($comments) {
-            $updateData['comments'] = $comments;
-        }
-
-        $document->update($updateData);
+            'comments' => $comments, // Cela peut être null, ce qui est acceptable si la colonne l'autorise
+        ]);
     }
+
 
     private function generateDocumentPdf(Document $document): string
     {
@@ -246,20 +265,17 @@ class DocumentAdminController extends Controller
         };
     }
 
-    private function getAgentSignaturePath(): string
+
+    private function getAgentSignaturePath(): ?string
     {
-        $signatureFile = self::SIGNATURES_DIR . '/agent_' . Auth::id() . '.png';
-        return Storage::disk('public')->exists($signatureFile)
-            ? storage_path('app/public/' . $signatureFile)
-            : public_path('images/signature-par-defaut.png');
+        $path = 'public/' . self::SIGNATURES_DIR . '/' . auth()->id() . '.png';
+        return Storage::exists($path) ? Storage::url($path) : null;
     }
 
-    private function getTimbrePath(): string
+    private function getTimbrePath(): ?string
     {
-        $timbreFile = self::TIMBRES_DIR . '/timbre.png';
-        return Storage::disk('public')->exists($timbreFile)
-            ? storage_path('app/public/' . $timbreFile)
-            : public_path('images/timbre-par-defaut.png');
+        $path = 'public/' . self::TIMBRES_DIR . '/timbre.png';
+        return Storage::exists($path) ? Storage::url($path) : null;
     }
 
     private function authorizeDocument(Document $document): void
@@ -305,7 +321,54 @@ class DocumentAdminController extends Controller
 
     public function editDoc($id)
     {
-        $document = Document::findOrFail($id); 
+        $document = Document::findOrFail($id);
         return view('agent.documents.edit', compact('document'));
     }
+
+    public function printNaissance($id)
+    {
+        $document = Document::findOrFail($id);
+        return view('certificats.naissance', compact('document'));
+    }
+
+    public function printMariage($id)
+    {
+        $document = Document::findOrFail($id);
+        return view('certificats.mariage', compact('document'));
+    }
+
+    public function printDeces($id)
+    {
+        $document = Document::findOrFail($id);
+        return view('certificats.deces', compact('document'));
+    }
+
+    // public function printGenerique($id)
+    // {
+    //     $document = Document::findOrFail($id);
+    //     return view('certificats.generique', compact('document'));
+    // }
+
+    public function approve(Request $request, $id)
+{
+    $document = Document::findOrFail($id);
+
+    // Traitement de la validation
+    $document->status = 'approuvee';
+    $document->agent_id = auth()->id();
+    $document->save();
+
+    // Redirige vers la bonne vue imprimable
+    switch ($document->type->value) {
+        case 'naissance':
+            return redirect()->route('agent.documents.certificats.naissance', $document->id);
+        case 'mariage':
+            return redirect()->route('agent.documents.certificats.mariage', $document->id);
+        case 'deces':
+            return redirect()->route('agent.documents.certificats.deces', $document->id);
+        // default:
+        //     return redirect()->route('document.print.generique', $document->id);
+    }
+}
+
 }

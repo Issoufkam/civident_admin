@@ -96,6 +96,11 @@ Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->grou
         Route::get('/{document}/duplicate', [DocumentAdminController::class, 'generateDuplicata'])->name('duplicata');
         Route::get('/documents/{attachment}/download', [DocumentAdminController::class, 'download'])->name('documents.download');
         Route::post('/documents/{id}/duplicata', [DocumentAdminController::class, 'createDuplicata'])->name('agent.documents.create.duplicata');
+        Route::get('/certificats/naissance/{id}/certificats', [DocumentAdminController::class, 'printNaissance'])->name('certificats.naissance');
+        Route::get('/certificats/mariage/{id}/certificats', [DocumentAdminController::class, 'printMariage'])->name('certificats.mariage');
+        Route::get('/certificats/deces/{id}/certificats', [DocumentAdminController::class, 'printDeces'])->name('certificats.deces');
+        // Route::get('/documents/{id}/print', [DocumentAdminController::class, 'printGenerique'])->name('generique');
+
     });
 });
 
