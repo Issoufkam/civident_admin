@@ -12,10 +12,26 @@ enum DocumentStatus: string
     public function color(): string
     {
         return match($this) {
-            self::EN_ATTENTE => 'orange',
-            self::APPROUVEE => 'green',
-            self::REJETEE => 'red',
-            self::VALIDATED => 'blue'
+            self::EN_ATTENTE => 'warning',
+            self::APPROUVEE => 'success',
+            self::REJETEE => 'danger',
+            self::VALIDATED => 'primary'
         };
+    }
+
+    public function label(): string
+    {
+        return match($this) {
+            self::EN_ATTENTE => 'En attente',
+            self::APPROUVEE => 'Approuvée',
+            self::REJETEE => 'Rejetée',
+            self::VALIDATED => 'Validée'
+        };
+    }
+
+    // Optionnel : méthode pour récupérer tous les cas
+    public static function allCases(): array
+    {
+        return array_map(fn($case) => $case->value, self::cases());
     }
 }

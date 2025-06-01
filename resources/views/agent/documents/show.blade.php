@@ -1,4 +1,5 @@
 @extends('layouts.app')
+
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show" role="alert">
     {{ session('success') }}
@@ -74,6 +75,21 @@
         background-color: var(--danger);
         color: white;
     }
+
+    /* Style pour le conteneur PDF */
+    .pdf-container {
+        width: 100%;
+        height: 600px; /* Ajustez la hauteur selon vos besoins */
+        border: 1px solid var(--gray-300);
+        border-radius: 0.5rem;
+        overflow: hidden; /* Important pour masquer les barres de défilement de l'iframe */
+    }
+
+    .pdf-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
 </style>
 
 <div class="container-fluid pt-3">
@@ -101,7 +117,7 @@
                                         <p class="mb-1 text-muted">Statut</p>
                                         <span class="badge
                                             {{ $document->status === 'approuvee' ? 'badge-approved' :
-                                               ($document->status === 'rejettee' ? 'badge-rejected' : 'badge-pending') }}">
+                                                ($document->status === 'rejettee' ? 'badge-rejected' : 'badge-pending') }}">
                                             {{ ucfirst($document->status->value) }}
                                         </span>
                                     </div>
@@ -208,96 +224,214 @@
                         </div>
                     </div>
 
+                    ---
+
                     {{-- Documents joints --}}
                     <div class="detail-section mt-4">
                         <h5 class="text-secondary">
                             <i class="bi bi-paperclip me-2"></i>Documents joints
                         </h5>
                         <div class="row mt-3" id="documentsList">
-                            @forelse($document->attachments as $doc)
-                                <div class="col-md-4 mb-3">
-                                    <div class="document-item p-3 rounded">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-file-earmark-pdf fs-3 me-3 text-danger"></i>
-                                            <div>
-                                                <div class="fw-bold">{{ $doc->nom }}</div>
-                                                <div class="text-muted small">
-                                                    {{ $doc->created_at->format('d/m/Y H:i') }} •
-                                                    {{ round($doc->size / 1024, 1) }} KB
-                                                </div>
+                            @if($document->justificatif_path)
+                                @php
+                                    $filePath = Storage::url($document->justificatif_path); // Utilisation de Storage::url()
+                                    $extension = pathinfo($document->justificatif_path, PATHINFO_EXTENSION);
+                                    $fileExists = Storage::disk('public')->exists($document->justificatif_path); // Vérifier l'existence
+                                @endphp
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="card document-item h-100 border-{{ $fileExists ? 'success' : 'danger' }}">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-start">
+                                                @if($fileExists)
+                                                    @php
+                                                        $icon = match(strtolower($extension)) {
+                                                            'pdf' => 'file-earmark-pdf text-danger',
+                                                            'jpg', 'jpeg', 'png' => 'file-earmark-image text-primary',
+                                                            default => 'file-earmark-text text-secondary'
+                                                        };
+                                                    @endphp
+
+                                                    <i class="bi bi-{{ $icon }} fs-3 me-3"></i>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title fw-bold">Justificatif principal</h6>
+                                                        <p class="card-text text-muted small mb-2">
+                                                            Ajouté le {{ $document->created_at->format('d/m/Y à H:i') }}
+                                                        </p>
+
+                                                        {{-- Aperçu de l'image ou lien pour PDF --}}
+                                                        @if(in_array(strtolower($extension), ['jpg', 'jpeg', 'png']))
+                                                            <div class="mt-2 mb-3">
+                                                                <img src="{{ $filePath }}"
+                                                                    class="img-thumbnail"
+                                                                    style="max-height: 150px; cursor: pointer"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#imagePreviewModal"
+                                                                    onclick="document.getElementById('previewImage').src = this.src; document.getElementById('downloadPreview').href = this.src;">
+                                                            </div>
+                                                        @elseif(strtolower($extension) === 'pdf')
+                                                            <div class="mt-2 mb-3">
+                                                                <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-info">
+                                                                    <i class="bi bi-eye"></i> Voir le PDF
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    <div class="btn-group align-self-start" role="group">
+                                                        <a href="{{ route('agent.documents.download', ['document' => $document->id, 'type' => 'justificatif']) }}"
+                                                           class="btn btn-sm btn-outline-primary"
+                                                           download>
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                        @if(in_array(strtolower($extension), ['jpg', 'jpeg', 'png']))
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-outline-secondary"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#imagePreviewModal"
+                                                                    onclick="document.getElementById('previewImage').src = '{{ $filePath }}'; document.getElementById('downloadPreview').href = '{{ $filePath }}';">
+                                                                <i class="bi bi-eye"></i>
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                @else
+                                                    <i class="bi bi-file-excel fs-3 me-3 text-danger"></i>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title fw-bold">Justificatif principal</h6>
+                                                        <p class="card-text text-danger small">Fichier introuvable sur le serveur</p>
+                                                        <p class="card-text text-muted small">Chemin: {{ $document->justificatif_path }}</p>
+                                                    </div>
+                                                @endif
                                             </div>
-                                            <a href="{{ route('documents.download', $doc) }}"
-                                               class="btn btn-sm btn-outline-primary ms-auto">
-                                                Télécharger
-                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Section pour les pièces jointes supplémentaires (si vous les avez) --}}
+                            @forelse($document->attachments as $attachment)
+                                @php
+                                    // Assurez-vous que votre modèle Attachment a une colonne 'path' et 'name'
+                                    $attachmentPath = Storage::url($attachment->path);
+                                    $attachmentExtension = pathinfo($attachment->path, PATHINFO_EXTENSION);
+                                    $attachmentExists = Storage::disk('public')->exists($attachment->path);
+                                @endphp
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="card document-item h-100 border-{{ $attachmentExists ? 'success' : 'danger' }}">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-start">
+                                                @if($attachmentExists)
+                                                    @php
+                                                        $icon = match(strtolower($attachmentExtension)) {
+                                                            'pdf' => 'file-earmark-pdf text-danger',
+                                                            'jpg', 'jpeg', 'png' => 'file-earmark-image text-primary',
+                                                            default => 'file-earmark-text text-secondary'
+                                                        };
+                                                    @endphp
+
+                                                    <i class="bi bi-{{ $icon }} fs-3 me-3"></i>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title fw-bold">{{ $attachment->name }}</h6>
+                                                        <p class="card-text text-muted small mb-2">
+                                                            {{ $attachment->created_at->format('d/m/Y à H:i') }} •
+                                                            {{ round(Storage::disk('public')->size($attachment->path) / 1024, 1) }} KB
+                                                        </p>
+
+                                                        @if(in_array(strtolower($attachmentExtension), ['jpg', 'jpeg', 'png']))
+                                                            <div class="mt-2 mb-3">
+                                                                <img src="{{ $attachmentPath }}"
+                                                                    class="img-thumbnail"
+                                                                    style="max-height: 150px; cursor: pointer"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#imagePreviewModal"
+                                                                    onclick="document.getElementById('previewImage').src = this.src; document.getElementById('downloadPreview').href = this.src;">
+                                                            </div>
+                                                        @elseif(strtolower($attachmentExtension) === 'pdf')
+                                                            <div class="mt-2 mb-3">
+                                                                <a href="{{ $attachmentPath }}" target="_blank" class="btn btn-sm btn-info">
+                                                                    <i class="bi bi-eye"></i> Voir le PDF
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    <div class="btn-group align-self-start" role="group">
+                                                        <a href="{{ route('agent.documents.download', ['document' => $document->id, 'attachment' => $attachment->id]) }}"
+                                                           class="btn btn-sm btn-outline-primary"
+                                                           download>
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                        @if(in_array(strtolower($attachmentExtension), ['jpg', 'jpeg', 'png']))
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-outline-secondary"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#imagePreviewModal"
+                                                                    onclick="document.getElementById('previewImage').src = '{{ $attachmentPath }}'; document.getElementById('downloadPreview').href = '{{ $attachmentPath }}';">
+                                                                <i class="bi bi-eye"></i>
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                @else
+                                                    <i class="bi bi-file-excel fs-3 me-3 text-danger"></i>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title fw-bold">{{ $attachment->name }}</h6>
+                                                        <p class="card-text text-danger small">Fichier introuvable sur le serveur</p>
+                                                        <p class="card-text text-muted small">Chemin: {{ $attachment->path }}</p>
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             @empty
                                 <div class="col-12">
-                                    <p class="text-muted">Aucun document joint disponible.</p>
+                                    <div class="alert alert-info">Aucun document supplémentaire joint.</div>
                                 </div>
                             @endforelse
-                            {{-- Actions d'approbation --}}
-                            {{-- @if(in_array($document->status->value, ['en_attente', 'en attente'])) --}}
-                            <div class="mt-4 d-flex justify-content-end gap-3">
-                                {{-- Bouton de validation --}}
-                                <form action="{{ route('agent.documents.approve', $document) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success">
-                                        <i class="bi bi-check-circle me-1"></i> Valider
-                                    </button>
-                                </form>
-
-                                {{-- Bouton de rejet --}}
-                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                                    <i class="bi bi-x-circle me-1"></i> Rejeter
-                                </button>
-                                <a href="{{ route('agent.documents.index') }}" class="btn btn-secondary">
-                                    <i class="bi bi-arrow-left me-1"></i> Retour à la liste
-                                </a>
-                            </div>
-                            {{-- @endif --}}
                         </div>
                     </div>
+
+                    ---
+
+                    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Aperçu du document</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img id="previewImage" src="" class="img-fluid" alt="Aperçu du document">
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                    <a href="#" id="downloadPreview" class="btn btn-primary" download>
+                                        <i class="bi bi-download me-1"></i>Télécharger
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     @if($document->status->value === 'APPROUVEE')
                         <div class="approved-document-template mt-5">
                             <h4 class="mb-4">Document Approuvé</h4>
 
-                            {{-- Debug: Afficher les informations --}}
-                            <div class="alert alert-info">
-                                <p>Type: {{ $document->type->value }}</p>
-                                <p>PDF Path: {{ $document->pdf_path ?? 'Non généré' }}</p>
-                            </div>
-
-                            @if($document->type->value === 'naissance')
-                                @if(View::exists('certificats.naissance'))
-                                    @include('certificats.naissance', ['document' => $document])
-                                @else
-                                    <div class="alert alert-warning">Template naissance non trouvé</div>
-                                @endif
-                            @elseif($document->type->value === 'mariage')
-                                @if(View::exists('certificats.mariage'))
-                                    @include('certificats.mariage', ['document' => $document])
-                                @else
-                                    <div class="alert alert-warning">Template mariage non trouvé</div>
-                                @endif
-                            @elseif($document->type->value === 'deces')
-                                @if(View::exists('certificats.deces'))
-                                    @include('certificats.deces', ['document' => $document])
-                                @else
-                                    <div class="alert alert-warning">Template décès non trouvé</div>
-                                @endif
-                            @endif
-
-                            @if($document->pdf_path && file_exists(public_path($document->pdf_path)))
-                                <a href="{{ $document->pdf_path }}"
-                                class="btn btn-primary mt-3"
-                                target="_blank">
-                                    <i class="bi bi-download me-2"></i>Télécharger le PDF
+                            {{-- Affichage direct du PDF s'il existe et est approuvé --}}
+                            @if($document->pdf_path && Storage::disk('public')->exists($document->pdf_path))
+                                <div class="pdf-container mb-4">
+                                    <iframe src="{{ Storage::url($document->pdf_path) }}" frameborder="0"></iframe>
+                                </div>
+                                <a href="{{ Storage::url($document->pdf_path) }}"
+                                   class="btn btn-primary"
+                                   target="_blank" download>
+                                    <i class="bi bi-download me-2"></i>Télécharger l'acte approuvé
                                 </a>
                             @else
-                                <div class="alert alert-danger mt-3">Le PDF n'est pas disponible</div>
+                                <div class="alert alert-warning">
+                                    Le PDF de l'acte approuvé n'est pas encore disponible ou introuvable.
+                                </div>
                             @endif
                         </div>
                     @else
@@ -311,29 +445,39 @@
     </div>
 </div>
 
-<!-- Modal de rejet -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form action="{{ route('agent.documents.reject', $document) }}" method="POST">
-        @csrf
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="rejectModalLabel">Motif du rejet</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="reason" class="form-label">Veuillez indiquer la raison du rejet :</label>
-                    <textarea class="form-control" name="reason" id="reason" rows="3" required></textarea>
+    <div class="modal-dialog">
+        <form action="{{ route('agent.documents.reject', $document) }}" method="POST">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel">Motif du rejet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Veuillez indiquer la raison du rejet :</label>
+                        <textarea class="form-control" name="reason" id="reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Confirmer le rejet</button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="submit" class="btn btn-danger">Confirmer le rejet</button>
-            </div>
-        </div>
-    </form>
-  </div>
+        </form>
+    </div>
 </div>
 
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mise à jour du lien de téléchargement dans le modal
+        $('#imagePreviewModal').on('show.bs.modal', function (event) {
+            const imgSrc = document.getElementById('previewImage').src;
+            document.getElementById('downloadPreview').href = imgSrc;
+        });
+    });
+</script>
+@endpush
 @endsection

@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
-
+use Illuminate\Pagination\Paginator;
 use App\Models\User;
 use App\Enums\DocumentType;
 use App\View\Composers\SidebarComposer;
@@ -29,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerRedirectMacros();
         $this->registerCustomValidators();
         $this->registerViewComposers();
+        Paginator::useBootstrapFive();
     }
 
     /**
@@ -71,4 +72,6 @@ class AppServiceProvider extends ServiceProvider
     {
         View::composer('partials.sidebar', SidebarComposer::class);
     }
+
+
 }

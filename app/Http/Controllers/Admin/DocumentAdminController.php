@@ -21,6 +21,37 @@ class DocumentAdminController extends Controller
     private const SIGNATURES_DIR = 'signatures';
     private const TIMBRES_DIR = 'timbres';
 
+    /**
+     * Get document counts by status for the authenticated agent's commune.
+     *
+     * @return array
+     */
+    private function getDocumentCounts(): array
+    {
+        $agent = auth()->user();
+        $communeId = $agent->commune_id;
+
+        if (!$communeId) {
+            return [
+                'attente' => 0,
+                'approuve' => 0,
+                'rejete' => 0,
+            ];
+        }
+
+        return [
+            'attente' => Document::where('commune_id', $communeId)
+                               ->where('status', DocumentStatus::EN_ATTENTE->value)
+                               ->count(),
+            'approuve' => Document::where('commune_id', $communeId)
+                                ->where('status', DocumentStatus::APPROUVEE->value)
+                                ->count(),
+            'rejete' => Document::where('commune_id', $communeId)
+                              ->where('status', DocumentStatus::REJETEE->value)
+                              ->count(),
+        ];
+    }
+
     public function index(Request $request)
     {
         $agent = auth()->user();
@@ -31,18 +62,35 @@ class DocumentAdminController extends Controller
             ->where('commune_id', $communeId)
             ->latest();
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        // Filtre par statut
+        if ($request->filled('status') && $request->status !== 'all') {
+            if ($request->status === 'duplicata') {
+                $query->where('is_duplicata', true);
+            } else {
+                $statusValue = match(strtolower($request->status)) {
+                    'approuvee' => DocumentStatus::APPROUVEE->value,
+                    'rejete' => DocumentStatus::REJETEE->value,
+                    'en_attente' => DocumentStatus::EN_ATTENTE->value,
+                    default => null,
+                };
+                if ($statusValue) {
+                    $query->where('status', $statusValue);
+                }
+            }
         }
 
-        if ($request->filled('is_duplicata')) {
-            $query->where('is_duplicata', true);
+        // Recherche par numéro de registre
+        if ($request->filled('search')) {
+            $query->where('registry_number', 'like', '%' . $request->search . '%');
         }
 
         $documents = $query->paginate(25);
         $communes = Commune::where('id', $communeId)->get();
 
-        return view('agent.documents.index', compact('documents', 'communes'));
+        // Get document counts
+        $documentCounts = $this->getDocumentCounts();
+
+        return view('agent.documents.index', compact('documents', 'communes', 'documentCounts'));
     }
 
     public function create()
@@ -88,43 +136,7 @@ class DocumentAdminController extends Controller
         }
     }
 
-    // public function approve(Document $document)
-    // {
-    //     $this->authorizeDocument($document);
-
-    //     try {
-    //         // Mettre à jour le statut
-    //         $document->update([
-    //             'status' => DocumentStatus::APPROUVEE,
-    //             'agent_id' => auth()->id(),
-    //             'decision_date' => now()
-    //         ]);
-
-    //         // Générer le PDF
-    //         $pdf = Pdf::loadView($this->getDocumentView($document), [
-    //             'document' => $document,
-    //             'signature' => $this->getAgentSignaturePath(),
-    //             'timbre' => $this->getTimbrePath(),
-    //         ]);
-
-    //         $filename = 'acte-' . $document->registry_number . '.pdf';
-    //         $path = 'public/documents/' . $filename;
-
-    //         Storage::put($path, $pdf->output());
-
-    //         // Mettre à jour le chemin du PDF
-    //         $document->update(['pdf_path' => 'storage/documents/' . $filename]);
-
-    //         return redirect()->route('agent.documents.show', $document)
-    //             ->with('success', 'Document approuvé avec succès');
-
-    //     } catch (\Exception $e) {
-    //         Log::error("Erreur approbation document: " . $e->getMessage());
-    //         return back()->with('error', 'Erreur lors de l\'approbation du document.');
-    //     }
-    // }
-
-   public function rejectDocument(Request $request, Document $document)
+    public function rejectDocument(Request $request, Document $document)
     {
         $this->authorizeDocument($document);
 
@@ -136,7 +148,6 @@ class DocumentAdminController extends Controller
 
         return redirect()->route('agent.documents.index')->with('success', 'Demande rejetée avec succès.');
     }
-
 
     public function createDuplicata($id)
     {
@@ -197,6 +208,7 @@ class DocumentAdminController extends Controller
                 'date_deces' => 'required|date',
                 'lieu_deces' => 'required|string|max:255',
             ],
+            default => [],
         };
     }
 
@@ -207,6 +219,7 @@ class DocumentAdminController extends Controller
         $data['registry_number'] = $this->generateRegistryNumber($data['type']);
         $data['justificatif_path'] = $request->file('justificatif')->store(self::JUSTIFICATIF_DIR, 'public');
         $data['metadata'] = $this->extractMetadata($data['type'], $request->all());
+        $data['status'] = DocumentStatus::EN_ATTENTE;
         return $data;
     }
 
@@ -227,6 +240,7 @@ class DocumentAdminController extends Controller
             'deces' => array_intersect_key($requestData, array_flip([
                 'nom_defunt', 'prenom_defunt', 'date_deces', 'lieu_deces'
             ])),
+            default => [],
         };
     }
 
@@ -236,10 +250,9 @@ class DocumentAdminController extends Controller
             'status' => $status,
             'agent_id' => auth()->id(),
             'decision_date' => now(),
-            'comments' => $comments, // Cela peut être null, ce qui est acceptable si la colonne l'autorise
+            'comments' => $comments,
         ]);
     }
-
 
     private function generateDocumentPdf(Document $document): string
     {
@@ -257,14 +270,13 @@ class DocumentAdminController extends Controller
 
     private function getDocumentView(Document $document): string
     {
-        return match ($document->type->value) {
+        return match ($document->type->value ?? $document->type) {
             'naissance' => 'certificats.naissance',
             'mariage' => 'certificats.mariage',
             'deces' => 'certificats.deces',
             default => throw new \InvalidArgumentException('Type de document inconnu'),
         };
     }
-
 
     private function getAgentSignaturePath(): ?string
     {
@@ -285,31 +297,30 @@ class DocumentAdminController extends Controller
         }
     }
 
-     public function update(Request $request, Document $document)
+    public function update(Request $request, Document $document)
     {
         $this->authorizeDocument($document);
 
         $validated = $this->validateDocumentRequest($request);
 
         try {
-            $validated = $this->prepareDocumentData($validated, $request);
+            $validated['metadata'] = $this->extractMetadata($validated['type'], $request->all());
 
-            // Ne pas régénérer certains champs
-            unset($validated['user_id'], $validated['commune_id'], $validated['registry_number']);
-
-            // Supprimer l'ancien fichier justificatif si un nouveau est fourni
             if ($request->hasFile('justificatif')) {
                 if ($document->justificatif_path && Storage::disk('public')->exists($document->justificatif_path)) {
                     Storage::disk('public')->delete($document->justificatif_path);
                 }
                 $validated['justificatif_path'] = $request->file('justificatif')
                     ->store(self::JUSTIFICATIF_DIR, 'public');
+            } else {
+                unset($validated['justificatif']);
             }
 
-            // Mise à jour
+            unset($validated['user_id'], $validated['commune_id'], $validated['registry_number']);
+
             $document->update($validated);
 
-            return redirect()->route('agent.documents.index', $document)
+            return redirect()->route('agent.documents.show', $document)
                 ->with('success', 'Document mis à jour avec succès.');
         } catch (\Exception $e) {
             Log::error("Erreur mise à jour document: " . $e->getMessage());
@@ -318,57 +329,185 @@ class DocumentAdminController extends Controller
         }
     }
 
-
     public function editDoc($id)
     {
         $document = Document::findOrFail($id);
+        $this->authorizeDocument($document);
         return view('agent.documents.edit', compact('document'));
     }
 
     public function printNaissance($id)
     {
         $document = Document::findOrFail($id);
+        $this->authorizeDocument($document);
         return view('certificats.naissance', compact('document'));
     }
 
     public function printMariage($id)
     {
         $document = Document::findOrFail($id);
+        $this->authorizeDocument($document);
         return view('certificats.mariage', compact('document'));
     }
 
     public function printDeces($id)
     {
         $document = Document::findOrFail($id);
+        $this->authorizeDocument($document);
         return view('certificats.deces', compact('document'));
     }
 
-    // public function printGenerique($id)
-    // {
-    //     $document = Document::findOrFail($id);
-    //     return view('certificats.generique', compact('document'));
-    // }
-
     public function approve(Request $request, $id)
-{
-    $document = Document::findOrFail($id);
+    {
+        $document = Document::findOrFail($id);
+        $this->authorizeDocument($document);
 
-    // Traitement de la validation
-    $document->status = 'approuvee';
-    $document->agent_id = auth()->id();
-    $document->save();
+        try {
+            $this->updateDocumentStatus($document, DocumentStatus::APPROUVEE);
 
-    // Redirige vers la bonne vue imprimable
-    switch ($document->type->value) {
-        case 'naissance':
-            return redirect()->route('agent.documents.certificats.naissance', $document->id);
-        case 'mariage':
-            return redirect()->route('agent.documents.certificats.mariage', $document->id);
-        case 'deces':
-            return redirect()->route('agent.documents.certificats.deces', $document->id);
-        // default:
-        //     return redirect()->route('document.print.generique', $document->id);
+            $pdfPath = $this->generateDocumentPdf($document);
+            $document->update(['pdf_path' => $pdfPath]);
+
+            switch ($document->type->value ?? $document->type) {
+                case 'naissance':
+                    return redirect()->route('agent.documents.certificats.naissance', $document->id)
+                        ->with('success', 'Document approuvé et acte prêt à être imprimé.');
+                case 'mariage':
+                    return redirect()->route('agent.documents.certificats.mariage', $document->id)
+                        ->with('success', 'Document approuvé et acte prêt à être imprimé.');
+                case 'deces':
+                    return redirect()->route('agent.documents.certificats.deces', $document->id)
+                        ->with('success', 'Document approuvé et acte prêt à être imprimé.');
+                default:
+                    return redirect()->route('agent.documents.show', $document)
+                        ->with('success', 'Document approuvé.');
+            }
+        } catch (\Exception $e) {
+            Log::error("Erreur d'approbation ou de génération de PDF pour document " . $document->id . ": " . $e->getMessage());
+            return back()->with('error', 'Erreur lors de l\'approbation ou de la génération du document.');
+        }
     }
-}
 
+    public function approuve(Request $request)
+    {
+        $agent = Auth::user();
+
+        if (!$agent) {
+            return redirect()->route('login')->with('error', 'Vous devez être connecté pour accéder à cette page.');
+        }
+
+        $communeId = $agent->commune_id;
+
+        if (empty($communeId)) {
+            return back()->with('error', 'Votre compte agent n\'est pas associé à une commune.');
+        }
+
+        $query = Document::where('status', DocumentStatus::APPROUVEE->value)
+            ->where('commune_id', $communeId);
+
+        if ($request->filled('type') && $request->type !== 'all') {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('registry_number', 'like', '%' . $search . '%')
+                  ->orWhereHas('user', function ($userQuery) use ($search) {
+                      $userQuery->where('registry_number', 'like', '%' . $search . '%');
+                  })
+                  ->orWhereJsonContains('metadata->nom_enfant', $search)
+                  ->orWhereJsonContains('metadata->nom_epoux', $search)
+                  ->orWhereJsonContains('metadata->nom_defunt', $search);
+            });
+        }
+
+        $documentsApprouves = $query->orderBy('updated_at', 'desc')->paginate(20);
+
+        // Get document counts
+        $documentCounts = $this->getDocumentCounts();
+
+        return view('agent.documents.approuve', compact('documentsApprouves', 'documentCounts'));
+    }
+
+    public function rejete(Request $request)
+    {
+        $agent = Auth::user();
+
+        if (!$agent) {
+            return redirect()->route('login')->with('error', 'Vous devez être connecté pour accéder à cette page.');
+        }
+
+        $communeId = $agent->commune_id;
+
+        if (empty($communeId)) {
+            return back()->with('error', 'Votre compte agent n\'est pas associé à une commune.');
+        }
+
+        $query = Document::where('status', DocumentStatus::REJETEE->value)
+            ->where('commune_id', $communeId);
+
+        if ($request->filled('type') && $request->type !== 'all') {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('registry_number', 'like', '%' . $search . '%')
+                  ->orWhereHas('user', function ($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', '%' . $search . '%');
+                  })
+                  ->orWhereJsonContains('metadata->nom_enfant', $search)
+                  ->orWhereJsonContains('metadata->nom_epoux', $search)
+                  ->orWhereJsonContains('metadata->nom_defunt', $search);
+            });
+        }
+
+        $documentsRejetes = $query->orderBy('updated_at', 'desc')->paginate(20);
+
+        // Get document counts
+        $documentCounts = $this->getDocumentCounts();
+
+        return view('agent.documents.rejete', compact('documentsRejetes', 'documentCounts'));
+    }
+
+    public function attente(Request $request)
+    {
+        $agent = Auth::user();
+
+        if (!$agent) {
+            return redirect()->route('login')->with('error', 'Vous devez être connecté pour accéder à cette page.');
+        }
+
+        $communeId = $agent->commune_id;
+
+        if (empty($communeId)) {
+            return back()->with('error', 'Votre compte agent n\'est pas associé à une commune.');
+        }
+
+        $query = Document::where('status', DocumentStatus::EN_ATTENTE->value)
+            ->where('commune_id', $communeId);
+
+        if ($request->filled('type') && $request->type !== 'all') {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('registry_number', 'like', '%' . $search . '%')
+                ->orWhereJsonContains('metadata->nom_enfant', $search)
+                ->orWhereJsonContains('metadata->nom_epoux', $search)
+                ->orWhereJsonContains('metadata->nom_defunt', $search);
+            });
+        }
+
+        $documentsEnAttente = $query->orderBy('updated_at', 'desc')->paginate(20);
+
+        // Get document counts
+        $documentCounts = $this->getDocumentCounts();
+
+        return view('agent.documents.attente', compact('documentsEnAttente', 'documentCounts'));
+    }
 }
