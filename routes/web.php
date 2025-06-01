@@ -98,9 +98,13 @@ Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->grou
     // Gestion des documents par les agents
     Route::prefix('documents')->name('documents.')->group(function () {
         Route::get('/', [DocumentAdminController::class, 'index'])->name('index');
+        Route::get('/approuve', [DocumentAdminController::class, 'approuve'])->name('approuve');
+        Route::get('/attente', [DocumentAdminController::class, 'attente'])->name('attente');
+        Route::get('/rejete', [DocumentAdminController::class, 'rejete'])->name('rejete');
         Route::get('/create', [DocumentAdminController::class, 'create'])->name('create');
         Route::post('/', [DocumentAdminController::class, 'store'])->name('store');
         Route::get('/{document}', [DocumentAdminController::class, 'showDocument'])->name('show');
+        Route::get('/{document}/download', [DocumentAdminController::class, 'download'])->name('download');
         Route::post('/{document}/approve', [DocumentAdminController::class, 'approve'])->name('approve');
         Route::post('/{document}/reject', [DocumentAdminController::class, 'rejectDocument'])->name('reject');
         Route::get('/{document}/edit', [DocumentAdminController::class, 'editDoc'])->name('edit');

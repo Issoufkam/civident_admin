@@ -22,29 +22,35 @@ class DocumentAdminController extends Controller
     private const TIMBRES_DIR = 'timbres';
 
     public function index(Request $request)
-    {
-        $agent = auth()->user();
-        $communeId = $agent->commune_id;
-        abort_unless($communeId, 403, "Aucune commune associée à votre profil.");
+{
+    $agent = auth()->user();
+    $communeId = $agent->commune_id;
+    abort_unless($communeId, 403, "Aucune commune associée à votre profil.");
 
-        $query = Document::with(['user', 'commune', 'agent'])
-            ->where('commune_id', $communeId)
-            ->latest();
+    $query = Document::with(['user', 'commune', 'agent'])
+        ->where('commune_id', $communeId)
+        ->latest();
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('is_duplicata')) {
+    // Filtre par statut
+    if ($request->filled('status') && $request->status !== 'all') {
+        if ($request->status === 'duplicata') {
             $query->where('is_duplicata', true);
+        } else {
+            // Assurez-vous que le statut est en majuscules pour la comparaison avec la BDD
+            $query->where('status', strtoupper($request->status));
         }
-
-        $documents = $query->paginate(25);
-        $communes = Commune::where('id', $communeId)->get();
-
-        return view('agent.documents.index', compact('documents', 'communes'));
     }
 
+    // Recherche par numéro de registre
+    if ($request->filled('search')) {
+        $query->where('registry_number', 'like', '%' . $request->search . '%');
+    }
+
+    $documents = $query->paginate(25);
+    $communes = Commune::where('id', $communeId)->get();
+
+    return view('agent.documents.index', compact('documents', 'communes'));
+}
     public function create()
     {
         return view('agent.documents.create');
