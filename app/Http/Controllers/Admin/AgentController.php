@@ -57,7 +57,7 @@ class AgentController extends Controller
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'telephone' => 'required|string|max:20|unique:users,telephone',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
             'commune_id' => 'required|exists:communes,id',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -76,19 +76,24 @@ class AgentController extends Controller
             ->with('success', 'Nouvel agent créé avec succès');
     }
 
-    // Affiche les détails d'un agent
-    public function show(User $agent)
-    {
-        $this->authorize('view', $agent);
-        return view('admin.agents.show', compact('agent'));
-    }
+   public function show($id) // Changez 'User $agent' en '$id'
+{
+    // Tente de trouver l'utilisateur par l'ID.
+    // Si l'utilisateur n'est pas trouvé, Laravel lancera automatiquement une erreur 404 (NotFoundHttpException).
+    $agent = User::findOrFail($id);
+
+    // Cette ligne sera exécutée seulement si l'agent est trouvé.
+    $this->authorize('view', $agent);
+
+    return view('admin.agents.show', compact('agent'));
+}
 
     // Affiche le formulaire d'édition d'un agent
     public function edit(User $agent)
     {
         $this->authorize('update', $agent);
 
-        $communes = Commune::orderBy('nom')->get();
+        $communes = Commune::orderBy('name')->get();
         return view('admin.agents.edit', compact('agent', 'communes'));
     }
 
@@ -104,7 +109,7 @@ class AgentController extends Controller
             'telephone' => "required|string|max:20|unique:users,telephone,{$agent->id}",
             'commune_id' => 'required|exists:communes,id',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => 'nullable|string|min:8',
         ]);
 
         if ($request->hasFile('photo')) {

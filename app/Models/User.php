@@ -60,6 +60,16 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Commune::class);
     }
+    public function processedDocuments()
+    {
+        return $this->hasMany(Document::class, 'agent_id');
+    }
+
+    
+    public function documents()
+    {
+        return $this->hasMany(Document::class, 'user_id');
+    }
 
     public function getActivityDescription(string $event): string
     {
@@ -82,10 +92,10 @@ class User extends Authenticatable
 
     public function roleDashboard()
     {
-        return match($this->role) {
-            UserRole::ADMIN => route('admin.dashboard'),
-            UserRole::AGENT => route('agent.dashboard'),
-            UserRole::CITOYEN => route('citoyen.dashboard'),
+        return match($this->role) { // $this->role est une string, donc comparez-la aux valeurs string de l'enum
+            UserRole::ADMIN->value => route('admin.dashboard'),
+            UserRole::AGENT->value => route('agent.dashboard'),
+            UserRole::CITOYEN->value => route('citoyen.dashboard'),
             default => throw new \Exception('Rôle utilisateur non reconnu')
         };
     }
