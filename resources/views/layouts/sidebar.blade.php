@@ -76,13 +76,25 @@
         @else
             {{-- Liens spécifiques à l'agent --}}
             <li class="{{ request()->routeIs('agent.documents.*') ? 'active' : '' }}">
-                <a href="{{ route('agent.documents.index') }}"><i class="bi bi-file-earmark-text"></i> Demandes</a>
-            </li>
-            {{-- Ces liens pourraient être dynamiques avec des comptes réels si vous les implémentez --}}
-            <li><a href="#"><i class="bi bi-hourglass-split"></i> En Attente <span class="badge rounded-pill bg-warning ms-2">24</span></a></li>
-            <li><a href="#"><i class="bi bi-check-circle"></i> Approuvés</a></li>
-            <li><a href="#"><i class="bi bi-x-circle"></i> Rejetés</a></li>
-        @endif
+        <a href="{{ route('agent.documents.index') }}"><i class="bi bi-file-earmark-text"></i> Demandes</a>
+    </li>
+    {{-- These links will now dynamically display counts --}}
+    <li>
+        <a href="{{ route('agent.documents.attente') }}"><i class="bi bi-hourglass-split"></i> En Attente
+            <span class="badge rounded-pill bg-warning ms-2">{{ $documentCounts['attente'] ?? 0 }}</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('agent.documents.approuve') }}"><i class="bi bi-check-circle"></i> Approuvés
+            <span class="badge rounded-pill bg-success ms-2">{{ $documentCounts['approuve'] ?? 0 }}</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('agent.documents.rejete') }}"><i class="bi bi-x-circle"></i> Rejetés
+            <span class="badge rounded-pill bg-danger ms-2">{{ $documentCounts['rejete'] ?? 0 }}</span>
+        </a>
+    </li>
+@endif
     </ul>
 
     <div class="sidebar-footer">
