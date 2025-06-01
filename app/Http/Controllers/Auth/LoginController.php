@@ -33,6 +33,10 @@ class LoginController extends Controller
 
     /**
      * Redirige l'utilisateur connecté selon son rôle.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  mixed  $user
+     * @return \Illuminate\Http\RedirectResponse
      */
     protected function authenticated(Request $request, $user)
     {
@@ -69,19 +73,24 @@ class LoginController extends Controller
 
     /**
      * Redirection en fonction du rôle de l'utilisateur.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\RedirectResponse
      */
     protected function redirectBasedOnRole(User $user)
     {
-        return match ($user->role) {
-            UserRole::ADMIN   => $this->redirectToAdminDashboard(),
-            UserRole::AGENT   => $this->redirectToAgentDashboard(),
-            UserRole::CITOYEN => $this->redirectToCitizenDashboard(),
-            default           => $this->redirectToFallback($user),
+        return match ($user->role) { // $user->role est déjà une string, donc comparez-la aux valeurs string de l'enum
+            UserRole::ADMIN->value   => $this->redirectToAdminDashboard(),
+            UserRole::AGENT->value   => $this->redirectToAgentDashboard(),
+            UserRole::CITOYEN->value => $this->redirectToCitizenDashboard(),
+            // default                  => $this->redirectToFallback($user),
         };
     }
 
     /**
      * Redirection tableau de bord admin.
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     protected function redirectToAdminDashboard()
     {
@@ -95,6 +104,8 @@ class LoginController extends Controller
 
     /**
      * Redirection tableau de bord agent.
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     protected function redirectToAgentDashboard()
     {
@@ -108,6 +119,8 @@ class LoginController extends Controller
 
     /**
      * Redirection espace citoyen.
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     protected function redirectToCitizenDashboard()
     {
@@ -121,6 +134,9 @@ class LoginController extends Controller
 
     /**
      * Fallback si aucune route ne correspond.
+     *
+     * @param  \App\Models\User|null  $user
+     * @return \Illuminate\Http\RedirectResponse
      */
     protected function redirectToFallback(User $user = null)
     {
@@ -137,6 +153,9 @@ class LoginController extends Controller
 
     /**
      * Déconnexion personnalisée.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function logout(Request $request)
     {

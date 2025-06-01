@@ -30,7 +30,7 @@
 
         <div class="mb-3">
             <label for="code" class="form-label">Code de la commune</label>
-            <input type="text" name="code" id="code" class="form-control" required maxlength="10" value="{{ old('code') }}">
+            <input type="text" name="code" id="code" class="form-control" required maxlength="15" value="{{ old('code') }}">
         </div>
 
         <div class="mb-3">

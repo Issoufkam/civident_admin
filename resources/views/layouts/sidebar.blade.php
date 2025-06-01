@@ -1,58 +1,94 @@
-    @php
-        $user = Auth::user();
-    @endphp
-    <nav id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <h3>{{ $user->isAdmin() ? 'Administration' : 'Mairie' }}</h3>
-            <div class="sidebar-brand-icon">
-                <i class="bi {{ $user->isAdmin() ? 'bi-shield-lock' : 'bi-building' }}"></i>
-            </div>
-        </div>
+@php
+    // Assurez-vous que l'utilisateur est authentifié pour éviter des erreurs si non connecté
+    $user = Auth::user();
+    // Dans un vrai scénario, cette vue ne serait accessible qu'après connexion.
+    // Pour la robustesse, on peut ajouter une vérification si $user est null.
+    // if (!$user) {
+    //     return redirect()->route('login');
+    // }
+@endphp
 
-        <div class="sidebar-user">
-            <img src="{{ $user->isAdmin() ? 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' : 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }}" alt="Photo" class="user-avatar">
-            <div class="user-info">
-                <h5>{{ $user->nom }}</h5>
-                <span>{{ $user->isAdmin() ? 'Super Administrateur' : 'Agent Municipal' }}</span>
-            </div>
+<nav id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <h3>{{ $user->isAdmin() ? 'Administration' : 'Mairie' }}</h3>
+        <div class="sidebar-brand-icon">
+            <i class="bi {{ $user->isAdmin() ? 'bi-shield-lock' : 'bi-building' }}"></i>
         </div>
+    </div>
 
-        <ul class="list-unstyled components">
-            @if($user->isAdmin())
-                <li class="">
-                    <a href="{{ route('admin.dashboard') }}">
-                        <i class="bi bi-speedometer2"></i>
-                        Tableau de Bord
-                    </a>
-                </li>
+    <div class="sidebar-user">
+        <img src="
+            @if (isset($user) && $user->photo && file_exists(public_path('storage/' . $user->photo)))
+                {{ asset('storage/' . $user->photo) }}
             @else
-                <li class="">
+                {{-- Fallback to UI Avatars if no photo is available or file doesn't exist --}}
+                @php
+                    $nameForAvatar = (isset($user) && $user->nom && $user->prenom) ? urlencode($user->prenom . ' ' . $user->nom) : 'Utilisateur';
+                @endphp
+                https://ui-avatars.com/api/?name={{ $nameForAvatar }}&background=0d6efd&color=fff&size=40
+            @endif
+        " alt="Photo de l'utilisateur" class="user-avatar">
+        <div class="user-info">
+            <h5>{{ $user->nom ?? 'Nom Inconnu' }}</h5>
+            <span>{{ $user->isAdmin() ? 'Super Administrateur' : 'Agent Municipal' }}</span>
+        </div>
+    </div>
+
+    <ul class="list-unstyled components">
+        {{-- Liens du tableau de bord (Admin ou Agent) --}}
+        @if($user->isAdmin())
+            <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('admin.dashboard') }}">
+                    <i class="bi bi-speedometer2"></i>
+                    Tableau de Bord
+                </a>
+            </li>
+        @else
+            <li class="{{ request()->routeIs('agent.dashboard') ? 'active' : '' }}">
                 <a href="{{ route('agent.dashboard') }}">
                     <i class="bi bi-speedometer2"></i>
                     Tableau de Bord
                 </a>
             </li>
-            @endif
+        @endif
 
-            @if ($user->isAdmin())
-                <li><a href="{{ route('admin.agents.index') }}"><i class="bi bi-people"></i> Agents</a></li>
-                <li><a href="{{ route('admin.regions.index') }}"><i class="bi bi-geo-alt"></i> Régions</a></li>
-                <li><a href="{{ route('admin.communes.index') }}"><i class="bi bi-geo-alt"></i> Communes</a></li>
+        {{-- Liens spécifiques à l'administrateur --}}
+        @if ($user->isAdmin())
+            <li class="{{ request()->routeIs('admin.agents.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.agents.index') }}"><i class="bi bi-people"></i> Agents</a>
+            </li>
+            <li class="{{ request()->routeIs('admin.regions.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.regions.index') }}"><i class="bi bi-geo-alt"></i> Régions</a>
+            </li>
+            <li class="{{ request()->routeIs('admin.communes.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.communes.index') }}"><i class="bi bi-building"></i> Communes</a>
+            </li>
+            {{-- Lien pour les statistiques (visible uniquement par les admins) --}}
+            {{-- Route corrigée vers 'admin.statistics' --}}
+            <li class="{{ request()->routeIs('admin.statistics') ? 'active' : '' }}">
+                <a href="{{ route('admin.statistics') }}"><i class="bi bi-bar-chart"></i> Statistiques</a>
+            </li>
+            {{-- Lien pour les performances (assumant route admin.lieux.index pour la performance globale) --}}
+            {{-- Route corrigée vers 'admin.lieux.*' --}}
+            <li class="{{ request()->routeIs('admin.performances') ? 'active' : '' }}">
+                <a href="{{ route('admin.performances') }}"><i class="bi bi-graph-up"></i> Performances</a>
+            </li>
+        @else
+            {{-- Liens spécifiques à l'agent --}}
+            <li class="{{ request()->routeIs('agent.documents.*') ? 'active' : '' }}">
+                <a href="{{ route('agent.documents.index') }}"><i class="bi bi-file-earmark-text"></i> Demandes</a>
+            </li>
+            {{-- Ces liens pourraient être dynamiques avec des comptes réels si vous les implémentez --}}
+            <li><a href="#"><i class="bi bi-hourglass-split"></i> En Attente <span class="badge rounded-pill bg-warning ms-2">24</span></a></li>
+            <li><a href="#"><i class="bi bi-check-circle"></i> Approuvés</a></li>
+            <li><a href="#"><i class="bi bi-x-circle"></i> Rejetés</a></li>
+        @endif
+    </ul>
 
-            @else
-                <li><a href="{{ route('agent.documents.index') }}"><i class="bi bi-file-earmark-text"></i>Demandes</a></li>
-                <li><a href="#"><i class="bi bi-hourglass-split"></i> En Attente <span class="badge rounded-pill bg-warning ms-2">24</span></a></li>
-                <li><a href="#"><i class="bi bi-check-circle"></i> Approuvés</a></li>
-                <li><a href="#"><i class="bi bi-x-circle"></i> Rejetés</a></li>
-            @endif
-
-
-        </ul>
-
-        <div class="sidebar-footer">
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
-            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="bi bi-box-arrow-left"></i> Déconnexion
-            </a>
-        </div>
-    </nav>
+    <div class="sidebar-footer">
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <i class="bi bi-box-arrow-left"></i> Déconnexion
+        </a>
+    </div>
+</nav>

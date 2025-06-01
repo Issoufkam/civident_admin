@@ -8,14 +8,35 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\CommuneAdminController;
 use App\Http\Controllers\Admin\DocumentAdminController;
-use App\Http\Controllers\Admin\DepartementAdminController;
+use App\Http\Controllers\Citizen\CitizenController; // Importation du contrôleur Citoyen
+use App\Http\Controllers\Citizen\DocumentCitizenController; // Importation du contrôleur de documents pour Citoyen
+// App\Http\Controllers\Admin\DepartementAdminController; // Non utilisé dans le code fourni, commenté
 use App\Models\Commune;
 
-Auth::routes();
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
 
-// Routes réservées aux administrateurs
+// Redirection de la racine vers la page de login
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+// IMPORTANT : Désactive la création de la route /home par Auth::routes()
+Auth::routes(['home' => false]);
+
+// Route pour le traitement du login (Auth::routes() le gère déjà, mais explicite pour clarté si 'home' est false)
+Route::post('login', [LoginController::class, 'login'])->name('login');
+
+// --- Routes réservées aux administrateurs ---
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-
     // Tableau de bord admin
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
@@ -24,65 +45,57 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/', [AgentController::class, 'index'])->name('index');
         Route::get('create', [AgentController::class, 'create'])->name('create');
         Route::post('/', [AgentController::class, 'store'])->name('store');
-        Route::get('{id}', [AgentController::class, 'show'])->name('show');
-        Route::get('{id}/edit', [AgentController::class, 'edit'])->name('edit');
-        Route::put('{id}', [AgentController::class, 'update'])->name('update');
+        Route::get('{agent}', [AgentController::class, 'show'])->name('show'); // Afficher les détails d'un agent
+        Route::get('{agent}/edit', [AgentController::class, 'edit'])->name('edit');
+        Route::put('{agent}', [AgentController::class, 'update'])->name('update');
         Route::delete('{agent}', [AgentController::class, 'destroy'])->name('destroy');
     });
 
-    // Statistiques globales
+    // Statistiques globales (pour les admins)
     Route::get('/statistics', [AdminController::class, 'showStatistics'])->name('statistics');
 
-    // Paramètres
-    Route::get('/Settings', [AdminController::class, 'showSettings'])->name('settings');
-
-    // Recherche
-    Route::get('/Search', [AdminController::class, 'showSearch'])->name('search');
-
-    // Notifications
-    Route::get('/Notifications', [AdminController::class, 'showNotifications'])->name('notifications');
-
-    // Sidebar
-    Route::get('/ToggleSidebar', [AdminController::class, 'showToggleSidebar'])->name('togglesidebar');
+    // Paramètres (placeholders, à implémenter dans AdminController)
+    Route::get('/settings', [AdminController::class, 'showSettings'])->name('settings');
+    Route::get('/search', [AdminController::class, 'showSearch'])->name('search');
+    Route::get('/notifications', [AdminController::class, 'showNotifications'])->name('notifications');
+    // Route::get('/toggle-sidebar', [AdminController::class, 'showToggleSidebar'])->name('togglesidebar'); // Généralement géré en JS côté client
 
     // Historique des actions
     Route::get('/history', [AdminController::class, 'viewHistory'])->name('history');
 
     // Gestion des communes
-    Route::prefix('communes')->group(function () {
-        Route::get('/', [CommuneAdminController::class, 'index'])->name('communes.index');
-        Route::get('/create', [CommuneAdminController::class, 'create'])->name('communes.create');
-        Route::post('/', [CommuneAdminController::class, 'store'])->name('communes.store');
-        Route::get('/{commune}/edit', [CommuneAdminController::class, 'edit'])->name('communes.edit');
-        Route::put('/{commune}', [CommuneAdminController::class, 'update'])->name('communes.update');
-        Route::delete('/{commune}', [CommuneAdminController::class, 'destroy'])->name('communes.destroy');
+    Route::prefix('communes')->name('communes.')->group(function () { // Ajout du name() au groupe
+        Route::get('/', [CommuneAdminController::class, 'index'])->name('index');
+        Route::get('/create', [CommuneAdminController::class, 'create'])->name('create');
+        Route::post('/', [CommuneAdminController::class, 'store'])->name('store');
+        Route::get('/{commune}/edit', [CommuneAdminController::class, 'edit'])->name('edit');
+        Route::put('/{commune}', [CommuneAdminController::class, 'update'])->name('update');
+        Route::delete('/{commune}', [CommuneAdminController::class, 'destroy'])->name('destroy');
     });
-
-    // // Gestion des départements
-    // Route::prefix('departements')->group(function () {
-    //     Route::get('/', [DepartementAdminController::class, 'index'])->name('departements.index');
-    //     Route::get('/create', [DepartementAdminController::class, 'create'])->name('departements.create');
-    //     Route::post('/', [DepartementAdminController::class, 'store'])->name('departements.store');
-    //     Route::get('/{departement}/edit', [DepartementAdminController::class, 'edit'])->name('departements.edit');
-    //     Route::put('/{departement}', [DepartementAdminController::class, 'update'])->name('departements.update');
-    //     Route::delete('/{departement}', [DepartementAdminController::class, 'destroy'])->name('departements.destroy');
-    // });
 
     // Gestion des régions
-    Route::prefix('regions')->group(function () {
-        Route::get('/', [CommuneAdminController::class, 'regionsIndex'])->name('regions.index');
-        Route::get('/create', [CommuneAdminController::class, 'createRegion'])->name('regions.create');
-        Route::post('/', [CommuneAdminController::class, 'regionStore'])->name('regions.store');
-        Route::get('/{region}/edit', [CommuneAdminController::class, 'regionEdit'])->name('regions.edit');
-        Route::put('/', [CommuneAdminController::class, 'regionUpdate'])->name('regions.update');
-        Route::delete('/regions', [CommuneAdminController::class, 'regionDestroy'])->name('regions.destroy');
+    Route::prefix('regions')->name('regions.')->group(function () { // Ajout du name() au groupe
+        Route::get('/', [CommuneAdminController::class, 'regionsIndex'])->name('index');
+        Route::get('/create', [CommuneAdminController::class, 'createRegion'])->name('create');
+        Route::post('/', [CommuneAdminController::class, 'regionStore'])->name('store');
+        // Correction des routes PUT et DELETE pour utiliser un paramètre {region}
+        Route::get('/{region}/edit', [CommuneAdminController::class, 'regionEdit'])->name('edit');
+        Route::put('/{region}', [CommuneAdminController::class, 'regionUpdate'])->name('update'); // {region} doit être l'identifiant unique de la région
+        Route::delete('/{region}', [CommuneAdminController::class, 'regionDestroy'])->name('destroy'); // {region} doit être l'identifiant unique de la région
     });
+
+    // Performances (Assumons que c'est une vue gérée par AdminController)
+    // Si 'admin.lieux.index' est la route pour les performances
+    Route::get('/performances', [AdminController::class, 'showPerformances'])->name('performances');
+    // Ou si c'est lié à un contrôleur spécifique pour les lieux :
+    // Route::get('/lieux', [DepartementAdminController::class, 'index'])->name('lieux.index');
 });
 
-// Routes pour les agents
+// --- Routes pour les agents municipaux ---
 Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->group(function () {
     Route::get('/dashboard', [AgentController::class, 'dashboard'])->name('dashboard');
 
+    // Gestion des documents par les agents
     Route::prefix('documents')->name('documents.')->group(function () {
         Route::get('/', [DocumentAdminController::class, 'index'])->name('index');
         Route::get('/create', [DocumentAdminController::class, 'create'])->name('create');
@@ -94,17 +107,46 @@ Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->grou
         Route::put('/{document}', [DocumentAdminController::class, 'update'])->name('update');
         Route::get('/{document}/pdf', [DocumentAdminController::class, 'generateDocumentPdf'])->name('pdf');
         Route::get('/{document}/duplicate', [DocumentAdminController::class, 'generateDuplicata'])->name('duplicata');
-        Route::get('/documents/{attachment}/download', [DocumentAdminController::class, 'download'])->name('documents.download');
-        Route::post('/documents/{id}/duplicata', [DocumentAdminController::class, 'createDuplicata'])->name('agent.documents.create.duplicata');
-        Route::get('/certificats/naissance/{id}/certificats', [DocumentAdminController::class, 'printNaissance'])->name('certificats.naissance');
-        Route::get('/certificats/mariage/{id}/certificats', [DocumentAdminController::class, 'printMariage'])->name('certificats.mariage');
-        Route::get('/certificats/deces/{id}/certificats', [DocumentAdminController::class, 'printDeces'])->name('certificats.deces');
-        // Route::get('/documents/{id}/print', [DocumentAdminController::class, 'printGenerique'])->name('generique');
+        // Correction du nom de la route et du paramètre pour le téléchargement des pièces jointes
+        Route::get('/attachments/{attachment}/download', [DocumentAdminController::class, 'downloadAttachment'])->name('download.attachment');
+        // Simplification du nom de la route pour la création de duplicata
+        Route::post('/{document}/create-duplicata', [DocumentAdminController::class, 'createDuplicata'])->name('create.duplicata');
 
+        // Routes pour l'impression des certificats (simplification de l'URI)
+        Route::get('/certificats/naissance/{document}', [DocumentAdminController::class, 'printNaissance'])->name('certificats.naissance');
+        Route::get('/certificats/mariage/{document}', [DocumentAdminController::class, 'printMariage'])->name('certificats.mariage');
+        Route::get('/certificats/deces/{document}', [DocumentAdminController::class, 'printDeces'])->name('certificats.deces');
     });
 });
 
-// Déconnexion personnalisée
+// // --- Routes pour les citoyens ---
+// Route::middleware(['auth', 'role:citoyen'])->prefix('citizen')->name('citizen.')->group(function () {
+//     // Tableau de bord citoyen
+//     Route::get('/dashboard', [CitizenController::class, 'dashboard'])->name('dashboard');
+
+//     // Demandes d'actes d'état civil en ligne
+//     Route::prefix('demandes')->name('demandes.')->group(function () {
+//         Route::get('/', [DocumentCitizenController::class, 'index'])->name('index'); // Lister les demandes du citoyen
+//         Route::get('/create/{type?}', [DocumentCitizenController::class, 'create'])->name('create'); // Formulaire de nouvelle demande (type d'acte optionnel)
+//         Route::post('/', [DocumentCitizenController::class, 'store'])->name('store'); // Soumettre la demande
+//         Route::get('/{document}', [DocumentCitizenController::class, 'show'])->name('show'); // Voir les détails d'une demande
+//         Route::get('/{document}/edit', [DocumentCitizenController::class, 'edit'])->name('edit'); // Modifier une demande (si statut le permet)
+//         Route::put('/{document}', [DocumentCitizenController::class, 'update'])->name('update'); // Mettre à jour une demande
+//         Route::delete('/{document}', [DocumentCitizenController::class, 'destroy'])->name('destroy'); // Annuler/Supprimer une demande
+
+//         // Paiement des frais de timbre en ligne
+//         Route::get('/{document}/pay', [DocumentCitizenController::class, 'showPaymentForm'])->name('pay');
+//         Route::post('/{document}/process-payment', [DocumentCitizenController::class, 'processPayment'])->name('process-payment');
+
+//         // Accès aux fichiers PDF signés numériquement
+//         Route::get('/{document}/download-pdf', [DocumentCitizenController::class, 'downloadSignedPdf'])->name('download-pdf');
+//     });
+
+//     // Accès à des statistiques publiques (si applicable)
+//     Route::get('/statistics', [CitizenController::class, 'showPublicStatistics'])->name('statistics');
+// });
+
+// --- Déconnexion personnalisée ---
 Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
@@ -112,10 +154,22 @@ Route::post('/logout', function (Request $request) {
     return redirect()->route('login');
 })->name('logout');
 
-// Authentification
-Route::post('login', [LoginController::class, 'login'])->name('login');
+// --- Route Fallback (à placer en dernier) ---
+// Gère les routes non trouvées et redirige l'utilisateur en fonction de son statut d'authentification et de son rôle.
+Route::fallback(function () {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
 
-// Autres routes publiques/commentées
-// Route::middleware(['auth', 'role:citoyen'])->group(function () {
-//     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
-// });
+    // Rediriger vers le tableau de bord par défaut de l'utilisateur authentifié
+    if (Auth::user()->isAdmin()) {
+        return redirect()->route('admin.dashboard');
+    } elseif (Auth::user()->isAgent()) {
+        return redirect()->route('agent.dashboard');
+    } elseif (Auth::user()->isCitoyen()) {
+        return redirect()->route('citizen.dashboard');
+    }
+
+    // Fallback si le rôle n'est pas reconnu ou si l'utilisateur est connecté mais sans rôle défini
+    return redirect()->route('login');
+});

@@ -4,15 +4,27 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Commune;
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Assurez-vous que cette ligne est présente
 use Illuminate\Support\Facades\DB;
 
 class CommuneAdminController extends Controller
 {
-    // Liste des communes avec compteur de documents
-    public function index()
+    // Liste des communes avec compteur de documents et fonctionnalité de recherche
+    public function index(Request $request) // <-- Ajout de l'injection de Request ici
     {
-        $communes = Commune::withCount('documents')->paginate(20);
+        $query = Commune::query()->withCount('documents'); // Commence la requête pour les communes
+
+        // Logique de recherche dynamique
+        if ($request->has('search') && $request->input('search') != '') {
+            $search = $request->input('search');
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('region', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%"); // Ajout de la recherche par code
+        }
+
+        // Pagination à 15 éléments
+        $communes = $query->paginate(15); // <-- Changé de 20 à 15
+
         return view('admin.communes.index', compact('communes'));
     }
 
@@ -27,8 +39,8 @@ class CommuneAdminController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:30',
-            'code' => 'required|string|unique:communes,code|max:10',
+            'name' => 'required|string|unique:communes|max:30',
+            'code' => 'required|string|max:15',
             'region' => 'required|string|max:50'
         ]);
 
@@ -48,7 +60,7 @@ class CommuneAdminController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:30',
-            'code' => 'required|string|max:10|unique:communes,code,' . $commune->id,
+            'code' => 'required|string|max:15|unique:communes,code,' . $commune->id,
             'region' => 'required|string|max:50'
         ]);
 
@@ -64,14 +76,22 @@ class CommuneAdminController extends Controller
         return redirect()->route('admin.communes.index')->with('success', 'Commune supprimée avec succès !');
     }
 
-    // Liste des régions distinctes
-    public function regionsIndex()
+    // Liste des régions distinctes avec pagination et recherche
+    public function regionsIndex(Request $request) // <-- Ajout de l'injection de Request ici
     {
-        $regions = DB::table('communes')
+        $query = DB::table('communes')
             ->select('region', DB::raw('count(*) as lieux_count'))
             ->groupBy('region')
-            ->orderBy('region')
-            ->paginate(10);
+            ->orderBy('region');
+
+        // Logique de recherche pour les régions
+        if ($request->has('search') && $request->input('search') != '') {
+            $search = $request->input('search');
+            $query->where('region', 'like', "%{$search}%");
+        }
+
+        // Pagination à 10 éléments (tel que demandé précédemment pour les régions)
+        $regions = $query->paginate(10);
 
         return view('admin.regions.index', compact('regions'));
     }
@@ -106,14 +126,19 @@ class CommuneAdminController extends Controller
         return back()->with('success', 'Région mise à jour avec succès !');
     }
 
-    // Suppression d'une région (supprime toutes les communes de cette région)
-    public function regionDestroy(Request $request)
+   public function regionDestroy(string $region) // Le paramètre $region est maintenant directement injecté
     {
-        $request->validate([
+        // Validation: Vérifie si la région existe dans la table 'communes'
+        // et qu'elle est bien une chaîne de caractères.
+        // La validation 'exists' est appliquée directement sur le paramètre injecté.
+        // Note: Si vous utilisez le Route Model Binding pour un ID, le 'exists' serait implicite.
+        // Ici, comme c'est une string, nous devons valider manuellement.
+        $validated = validator(['region' => $region], [
             'region' => 'required|string|exists:communes,region'
-        ]);
+        ])->validate();
 
-        Commune::where('region', $request->region)->delete();
+        // Suppression de toutes les communes appartenant à cette région
+        Commune::where('region', $validated['region'])->delete();
 
         return back()->with('success', 'Région supprimée avec succès !');
     }

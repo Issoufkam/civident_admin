@@ -29,6 +29,19 @@ class DocumentSeeder extends Seeder
                     $registryNumber = now()->year . '-' . Str::upper($commune->code) . '-' . rand(1000, 9999);
                     $filename = 'doc-' . uniqid() . '.pdf';
                     $justificatifPath = $this->createFakePdf($filename, $metadata);
+                   $year = fake()->randomElement([
+                        ...array_fill(0, 10, 2022), // 10% poids
+                        ...array_fill(0, 20, 2023), // 20%
+                        ...array_fill(0, 30, 2024), // 30%
+                        ...array_fill(0, 40, 2025), // 40%
+                    ]);
+
+                    $start = "{$year}-01-01";
+                    $end = $year == now()->year ? now() : "{$year}-12-31";
+
+                    $createdAt = fake()->dateTimeBetween($start, $end);
+
+
 
                     Document::create([
                         'type' => $type->value,
@@ -39,6 +52,8 @@ class DocumentSeeder extends Seeder
                         'user_id' => $citoyen->id,
                         'commune_id' => $commune->id,
                         'agent_id' => null,
+                        'created_at' => $createdAt,
+                        'updated_at' => $createdAt,
                     ]);
                 }
             }
