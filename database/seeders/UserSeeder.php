@@ -16,12 +16,12 @@ class UserSeeder extends Seeder
     {
         // Création d'un utilisateur administrateur
         User::create([
-            'nom' => 'Admin',
-            'prenom' => 'Admin',
+            'nom' => 'Groupe 14',
+            'prenom' => 'Groupe 14',
             'telephone' => '0123456789',
-            'email' => 'admin@example.com',
+            'email' => 'adminG14@uvci.ci',
             'password' => Hash::make('password'),
-            'role' => UserRole::ADMIN, 
+            'role' => UserRole::ADMIN,
         ]);
 
         // Exemple : Création d'un agent
