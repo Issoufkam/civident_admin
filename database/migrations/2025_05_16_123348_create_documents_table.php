@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('justificatif_path'); // Chemin du fichier justificatif
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('commune_id')->constrained()->onDelete('cascade');
+            $table->timestamp('paid_at')->nullable();
+            $table->boolean('is_paid')->default(false);
+            $table->boolean('is_downloaded')->default(false); // Nouvelle colonne: Indique si le document a été téléchargé
             $table->date('traitement_date')->nullable();
             $table->foreignId('agent_id')->nullable()->constrained('users')->onDelete('set null');
 
@@ -42,3 +45,4 @@ return new class extends Migration
         Schema::dropIfExists('documents');
     }
 };
+
