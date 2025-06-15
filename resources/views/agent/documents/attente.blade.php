@@ -54,7 +54,7 @@
                                     <span class="badge bg-info">Duplicata</span>
                                     @endif
                                 </td>
-                                <td>{{ $document->user->name ?? 'N/A' }}</td>
+                                <td>{{ $document->user->nom ?? 'N/A' }}</td>
                                 <td>{{ $document->created_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     <span class="badge bg-warning">

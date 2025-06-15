@@ -9,11 +9,13 @@ use App\Models\ActivityLog;
 use App\Models\Payment;
 use App\Models\Document;
 use App\Enums\DocumentStatus;
-use App\Enums\DocumentType;
+use App\Enums\DocumentType; // Assurez-vous que cette énumération contient tous vos types de documents
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Enums\UserRole;
+use Exception;
+use Log;
 
 class AdminController extends Controller
 {
@@ -84,19 +86,14 @@ class AdminController extends Controller
             : 0;
 
         // NOUVELLES STATISTIQUES : Paiements
-        // Assurez-vous d'avoir un modèle 'Payment' et une table 'payments'
-        // avec des colonnes comme 'montant' (float/decimal) et 'statut' (string, ex: 'completed', 'en_attente', 'failed')
-        $totalRevenue = Payment::where('status', 'completed')->sum('amount'); // Assurez-vous que 'amount' est le bon nom de colonne pour le montant du paiement
+        $totalRevenue = Payment::where('status', 'completed')->sum('amount');
         $totalPayments = Payment::count();
-        $pendingPayments = Payment::where('status', 'en_attente')->count(); // Assurez-vous que 'en_attente' est le bon statut pour les paiements en attente
+        $pendingPayments = Payment::where('status', 'en_attente')->count();
         $completedPayments = Payment::where('status', 'completed')->count();
 
 
         // NOUVELLES STATISTIQUES : Génération de Documents et Statuts
-        // 'pdf_path' dans votre modèle Document indique si un PDF a été généré
         $totalPdfsGenerated = Document::whereNotNull('pdf_path')->count();
-        // Pour les PDFs signés numériquement, assurez-vous d'avoir une colonne 'is_signed_digitally' (boolean) dans votre table documents
-        // Si cette colonne n'existe pas, cette valeur restera 0 ou vous devrez l'implémenter.
         $totalPdfsSigned = Document::where('status', $approuvee)
                                    ->whereNotNull('pdf_path')
                                    ->count();
@@ -515,12 +512,56 @@ class AdminController extends Controller
     }
 
     /**
-     * Affiche les paramètres du système.
+     * Affiche le formulaire de configuration des prix des documents (prix unitaires).
+     *
      * @return \Illuminate\View\View
      */
-    public function showSettings()
+    public function showSettings() // Renommée de settingsForm pour correspondre à la route
     {
-        return view('admin.settings');
+        $unitPrices = [];
+        foreach (DocumentType::cases() as $typeEnum) {
+            $typeValue = $typeEnum->value;
+            // Clé de réglage pour le prix unitaire
+            $setting = DB::table('settings')->where('key', 'unit_price_' . $typeValue)->first();
+            $unitPrices[$typeValue] = $setting ? (float)$setting->value : 0.00; // Par défaut à 0.00 si non trouvé
+        }
+
+        return view('admin.settings.prices', ['prices' => $unitPrices]); // Passer sous le nom 'prices'
+    }
+
+    /**
+     * Enregistre les prix unitaires des documents configurés.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function saveSettings(Request $request)
+    {
+        $request->validate([
+            'prices.*' => 'required|numeric|min:0', // Valide que chaque prix est un nombre >= 0
+        ]);
+
+        try {
+            foreach ($request->input('prices') as $type => $price) {
+                // S'assurer que le type provient bien de l'énumération pour éviter des clés invalides
+                if (in_array($type, array_column(DocumentType::cases(), 'value'))) {
+                    DB::table('settings')->updateOrInsert(
+                        ['key' => 'unit_price_' . $type], // Clé de réglage pour le prix unitaire
+                        ['value' => $price]
+                    );
+                } else {
+                    Log::warning("Tentative d'enregistrer un prix pour un type de document non valide: {$type}");
+                }
+            }
+
+            return redirect()->back()->with('success', 'Les prix unitaires des documents ont été mis à jour avec succès.');
+        } catch (Exception $e) {
+            Log::error('Erreur lors de l\'enregistrement des prix unitaires des documents: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+            return redirect()->back()->with('error', 'Une erreur est survenue lors de l\'enregistrement des prix unitaires. Veuillez réessayer.');
+        }
     }
 
     /**

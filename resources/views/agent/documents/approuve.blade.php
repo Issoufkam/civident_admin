@@ -53,8 +53,8 @@
                                     <span class="badge bg-info">Duplicata</span>
                                     @endif
                                 </td>
-                                <td>{{ $document->user->name ?? 'N/A' }}</td>
-                                <td>{{ $document->decision_date ? $document->decision_date->format('d/m/Y H:i') : 'N/A' }}</td>
+                                <td>{{ $document->user->nom ?? 'N/A' }}</td>
+                                <td>{{ $document->updated_at ? $document->updated_at->format('d/m/Y H:i') : 'N/A' }}</td>
                                 <td>
                                     <span class="badge bg-success">
                                         {{ $document->status }}
