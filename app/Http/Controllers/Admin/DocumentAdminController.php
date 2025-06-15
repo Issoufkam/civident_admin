@@ -13,13 +13,16 @@ use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class DocumentAdminController extends Controller
 {
+    // Constantes des répertoires, tous sont des sous-dossiers de 'storage/app/public'
     private const JUSTIFICATIF_DIR = 'justificatifs';
     private const DOCUMENTS_DIR = 'documents';
     private const SIGNATURES_DIR = 'signatures';
     private const TIMBRES_DIR = 'timbres';
+    private const ATTACHMENTS_DIR = 'attachments'; // Nouvelle constante pour le répertoire des pièces jointes
 
     /**
      * Get document counts by status for the authenticated agent's commune.
@@ -47,8 +50,8 @@ class DocumentAdminController extends Controller
                                 ->where('status', DocumentStatus::APPROUVEE->value)
                                 ->count(),
             'rejete' => Document::where('commune_id', $communeId)
-                              ->where('status', DocumentStatus::REJETEE->value)
-                              ->count(),
+                               ->where('status', DocumentStatus::REJETEE->value)
+                               ->count(),
         ];
     }
 
@@ -100,6 +103,8 @@ class DocumentAdminController extends Controller
 
     public function showDocument(Document $document)
     {
+        // Charge la relation 'attachments' pour qu'elle soit disponible dans la vue
+        $document->load('attachments');
         $this->authorizeDocument($document);
         return view('agent.documents.show', compact('document'));
     }
@@ -124,15 +129,41 @@ class DocumentAdminController extends Controller
 
     public function store(Request $request)
     {
+        // La validation doit inclure les pièces jointes si elles sont envoyées avec le formulaire
         $validated = $this->validateDocumentRequest($request);
-        $validated = $this->prepareDocumentData($validated, $request);
 
         try {
-            Document::create($validated);
-            return redirect()->route('agent.documents.index')->with('success', 'Document créé avec succès.');
+            // Préparation des données principales du document (y compris justificatif_path)
+            $documentData = $this->prepareDocumentData($validated, $request);
+            $document = Document::create($documentData); // Crée le document principal
+
+            // --- NOUVELLE LOGIQUE POUR LES ATTACHMENTS SUPPLÉMENTAIRES ---
+            // Vérifie s'il y a des fichiers dans le champ 'attachments_files'
+            if ($request->hasFile('attachments_files')) {
+                foreach ($request->file('attachments_files') as $file) {
+                    // Vérifie si chaque fichier est valide avant de le stocker
+                    if ($file->isValid()) {
+                        // Stocke le fichier dans storage/app/public/attachments
+                        $attachmentPath = $file->store(self::ATTACHMENTS_DIR, 'public');
+
+                        // Crée une entrée dans la table 'attachments' liée à ce document
+                        $document->attachments()->create([
+                            'name' => $file->getClientOriginalName(),
+                            'path' => $attachmentPath,
+                            'mime_type' => $file->getMimeType(),
+                            'size' => $file->getSize(), // Enregistre la taille en octets
+                        ]);
+                    } else {
+                        Log::warning("Fichier non valide tenté d'être uploadé pour document " . $document->id);
+                    }
+                }
+            }
+            // --- FIN NOUVELLE LOGIQUE ---
+
+            return redirect()->route('agent.documents.index')->with('success', 'Document et pièces jointes créés avec succès.');
         } catch (\Exception $e) {
-            Log::error("Erreur création document: " . $e->getMessage());
-            return back()->withInput()->with('error', 'Erreur lors de la création du document.');
+            Log::error("Erreur création document/attachments: " . $e->getMessage());
+            return back()->withInput()->with('error', 'Erreur lors de la création du document et des pièces jointes.');
         }
     }
 
@@ -163,7 +194,7 @@ class DocumentAdminController extends Controller
         $duplicata->registry_number = $original->registry_number . '-DUP-' . Str::random(3);
         $duplicata->status = DocumentStatus::EN_ATTENTE;
         $duplicata->pdf_path = null;
-        $duplicata->decision_date = null;
+        $duplicata->traitement_date = null;
         $duplicata->agent_id = null;
         $duplicata->created_at = now();
         $duplicata->updated_at = now();
@@ -174,14 +205,17 @@ class DocumentAdminController extends Controller
 
     private function validateDocumentRequest(Request $request): array
     {
-        return $request->validate([
+        $rules = [
             'type' => ['required', Rule::in(['naissance', 'mariage', 'deces'])],
             'registry_page' => 'nullable|integer',
             'registry_volume' => 'nullable|string|max:255',
             'justificatif' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'traitement_date' => 'required|date',
-            ...$this->getTypeSpecificValidationRules($request->type),
-        ]);
+            // Règle pour les pièces jointes supplémentaires (facultatif, car pas toujours présent)
+            'attachments_files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:5120', // Max 5MB par fichier
+        ];
+
+        return $request->validate(array_merge($rules, $this->getTypeSpecificValidationRules($request->type)));
     }
 
     private function getTypeSpecificValidationRules(string $type): array
@@ -193,12 +227,16 @@ class DocumentAdminController extends Controller
                 'date_naissance' => 'required|date',
                 'sexe' => 'required|string|max:8',
                 'lieu_naissance' => 'required|string|max:50',
+                'nationalite_pere' => 'required|string|max:50',
+                'nationalite_mere' => 'required|string|max:50',
                 'nom_pere' => 'required|string|max:255',
                 'nom_mere' => 'required|string|max:255',
             ],
             'mariage' => [
                 'nom_epoux' => 'required|string|max:255',
                 'nom_epouse' => 'required|string|max:255',
+                'nationalite_epoux' => 'required|string|max:50',
+                'nationalite_epouse' => 'required|string|max:50',
                 'date_mariage' => 'required|date',
                 'lieu_mariage' => 'required|string|max:255',
             ],
@@ -217,6 +255,7 @@ class DocumentAdminController extends Controller
         $data['user_id'] = Auth::id();
         $data['commune_id'] = Auth::user()->commune_id;
         $data['registry_number'] = $this->generateRegistryNumber($data['type']);
+        // Stocke le justificatif principal dans storage/app/public/justificatifs
         $data['justificatif_path'] = $request->file('justificatif')->store(self::JUSTIFICATIF_DIR, 'public');
         $data['metadata'] = $this->extractMetadata($data['type'], $request->all());
         $data['status'] = DocumentStatus::EN_ATTENTE;
@@ -235,7 +274,7 @@ class DocumentAdminController extends Controller
                 'nom_enfant', 'prenom_enfant', 'date_naissance', 'sexe', 'lieu_naissance', 'nom_pere', 'nom_mere'
             ])),
             'mariage' => array_intersect_key($requestData, array_flip([
-                'nom_epoux', 'nom_epouse', 'date_mariage', 'lieu_mariage'
+                'nom_epoux', 'nom_epouse', 'date_mariage', 'lieu_mariage', 'nationalite_epoux', 'nationalite_epouse'
             ])),
             'deces' => array_intersect_key($requestData, array_flip([
                 'nom_defunt', 'prenom_defunt', 'date_deces', 'lieu_deces'
@@ -249,9 +288,13 @@ class DocumentAdminController extends Controller
         $document->update([
             'status' => $status,
             'agent_id' => auth()->id(),
-            'decision_date' => now(),
+            'traitement_date' => now(),
             'comments' => $comments,
         ]);
+        // Si le document est approuvé, on enregistre la date de traitement
+        if ($status === DocumentStatus::APPROUVEE) {
+            $document->update(['traitement_date' => Carbon::now()->toDateString()]); // Définit la date actuelle au format 'AAAA-MM-JJ'
+        }
     }
 
     private function generateDocumentPdf(Document $document): string
@@ -263,9 +306,11 @@ class DocumentAdminController extends Controller
         ]);
 
         $filename = 'acte-' . $document->registry_number . '.pdf';
-        Storage::put('public/' . self::DOCUMENTS_DIR . '/' . $filename, $pdf->output());
+        // Stocke le PDF généré dans storage/app/public/documents
+        Storage::disk('public')->put(self::DOCUMENTS_DIR . '/' . $filename, $pdf->output());
 
-        return 'storage/' . self::DOCUMENTS_DIR . '/' . $filename;
+        // Retourne le chemin relatif au disque 'public' (ex: 'documents/acte-xyz.pdf')
+        return self::DOCUMENTS_DIR . '/' . $filename;
     }
 
     private function getDocumentView(Document $document): string
@@ -280,14 +325,16 @@ class DocumentAdminController extends Controller
 
     private function getAgentSignaturePath(): ?string
     {
-        $path = 'public/' . self::SIGNATURES_DIR . '/' . auth()->id() . '.png';
-        return Storage::exists($path) ? Storage::url($path) : null;
+        // Cherche la signature dans storage/app/public/signatures
+        $path = self::SIGNATURES_DIR . '/' . auth()->id() . '.png';
+        return Storage::disk('public')->exists($path) ? Storage::disk('public')->url($path) : null;
     }
 
     private function getTimbrePath(): ?string
     {
-        $path = 'public/' . self::TIMBRES_DIR . '/timbre.png';
-        return Storage::exists($path) ? Storage::url($path) : null;
+        // Cherche le timbre dans storage/app/public/timbres
+        $path = self::TIMBRES_DIR . '/timbre.png';
+        return Storage::disk('public')->exists($path) ? Storage::disk('public')->url($path) : null;
     }
 
     private function authorizeDocument(Document $document): void
@@ -301,31 +348,61 @@ class DocumentAdminController extends Controller
     {
         $this->authorizeDocument($document);
 
+        // La validation doit inclure les pièces jointes si elles sont envoyées avec le formulaire
         $validated = $this->validateDocumentRequest($request);
 
         try {
             $validated['metadata'] = $this->extractMetadata($validated['type'], $request->all());
 
+            // Gère l'update du justificatif principal
             if ($request->hasFile('justificatif')) {
+                // Supprime l'ancien justificatif de storage/app/public/justificatifs si existant
                 if ($document->justificatif_path && Storage::disk('public')->exists($document->justificatif_path)) {
                     Storage::disk('public')->delete($document->justificatif_path);
                 }
+                // Stocke le nouveau justificatif dans storage/app/public/justificatifs
                 $validated['justificatif_path'] = $request->file('justificatif')
                     ->store(self::JUSTIFICATIF_DIR, 'public');
             } else {
+                // Si aucun nouveau justificatif n'est uploadé, on ne met pas à jour le champ
+                // Il est important de ne pas unset 'justificatif' si il est absent dans la request
+                // car cela pourrait écraser le champ existant avec null si la validation le permettait.
+                // Par contre, si votre formulaire permet de vider le justificatif, il faudrait une logique dédiée.
+                // Ici, on part du principe qu'il doit toujours y avoir un justificatif.
                 unset($validated['justificatif']);
             }
 
+            // Mise à jour du document principal
             unset($validated['user_id'], $validated['commune_id'], $validated['registry_number']);
-
             $document->update($validated);
+
+            // --- NOUVELLE LOGIQUE POUR LES ATTACHMENTS SUPPLÉMENTAIRES LORS DE L'UPDATE ---
+            // Supprimer les anciens attachments si nécessaire (dépend de votre UX)
+            // Pour l'exemple, nous allons juste ajouter les nouveaux et ne pas gérer la suppression ici
+            // Une approche plus robuste inclurait des IDs pour les attachments existants ou une suppression/recréation totale.
+            if ($request->hasFile('attachments_files')) {
+                foreach ($request->file('attachments_files') as $file) {
+                    if ($file->isValid()) {
+                        $attachmentPath = $file->store(self::ATTACHMENTS_DIR, 'public');
+                        $document->attachments()->create([
+                            'name' => $file->getClientOriginalName(),
+                            'path' => $attachmentPath,
+                            'mime_type' => $file->getMimeType(),
+                            'size' => $file->getSize(),
+                        ]);
+                    } else {
+                        Log::warning("Fichier non valide tenté d'être uploadé lors de la mise à jour pour document " . $document->id);
+                    }
+                }
+            }
+            // --- FIN NOUVELLE LOGIQUE D'UPDATE ---
 
             return redirect()->route('agent.documents.show', $document)
                 ->with('success', 'Document mis à jour avec succès.');
         } catch (\Exception $e) {
-            Log::error("Erreur mise à jour document: " . $e->getMessage());
+            Log::error("Erreur mise à jour document/attachments: " . $e->getMessage());
             return back()->withInput()
-                ->with('error', 'Erreur lors de la mise à jour du document.');
+                ->with('error', 'Erreur lors de la mise à jour du document et des pièces jointes.');
         }
     }
 
@@ -413,12 +490,12 @@ class DocumentAdminController extends Controller
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('registry_number', 'like', '%' . $search . '%')
-                  ->orWhereHas('user', function ($userQuery) use ($search) {
-                      $userQuery->where('registry_number', 'like', '%' . $search . '%');
-                  })
-                  ->orWhereJsonContains('metadata->nom_enfant', $search)
-                  ->orWhereJsonContains('metadata->nom_epoux', $search)
-                  ->orWhereJsonContains('metadata->nom_defunt', $search);
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('registry_number', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereJsonContains('metadata->nom_enfant', $search)
+                    ->orWhereJsonContains('metadata->nom_epoux', $search)
+                    ->orWhereJsonContains('metadata->nom_defunt', $search);
             });
         }
 
@@ -455,12 +532,12 @@ class DocumentAdminController extends Controller
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('registry_number', 'like', '%' . $search . '%')
-                  ->orWhereHas('user', function ($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', '%' . $search . '%');
-                  })
-                  ->orWhereJsonContains('metadata->nom_enfant', $search)
-                  ->orWhereJsonContains('metadata->nom_epoux', $search)
-                  ->orWhereJsonContains('metadata->nom_defunt', $search);
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereJsonContains('metadata->nom_enfant', $search)
+                    ->orWhereJsonContains('metadata->nom_epoux', $search)
+                    ->orWhereJsonContains('metadata->nom_defunt', $search);
             });
         }
 

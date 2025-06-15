@@ -8,8 +8,8 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\CommuneAdminController;
 use App\Http\Controllers\Admin\DocumentAdminController;
-use App\Http\Controllers\Citizen\CitizenController; // Importation du contrôleur Citoyen
-use App\Http\Controllers\Citizen\DocumentCitizenController; // Importation du contrôleur de documents pour Citoyen
+use App\Http\Controllers\CitoyenController; // Importation du contrôleur Citoyen
+// App\Http\Controllers\Citizen\DocumentCitizenController; // Commenté car CitoyenController semble gérer les documents aussi
 // App\Http\Controllers\Admin\DepartementAdminController; // Non utilisé dans le code fourni, commenté
 use App\Models\Commune;
 
@@ -54,17 +54,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Statistiques globales (pour les admins)
     Route::get('/statistics', [AdminController::class, 'showStatistics'])->name('statistics');
 
-    // Paramètres (placeholders, à implémenter dans AdminController)
-    Route::get('/settings', [AdminController::class, 'showSettings'])->name('settings');
+    // ROUTES POUR LA CONFIGURATION DES PRIX
+    // Correction ici: Appelle showSettings() au lieu de settingsForm()
+    Route::get('/settings', [AdminController::class, 'showSettings'])->name('settings'); // Affiche le formulaire
+    Route::post('/settings', [AdminController::class, 'saveSettings'])->name('settings.save'); // Gère la soumission du formulaire
+
     Route::get('/search', [AdminController::class, 'showSearch'])->name('search');
     Route::get('/notifications', [AdminController::class, 'showNotifications'])->name('notifications');
-    // Route::get('/toggle-sidebar', [AdminController::class, 'showToggleSidebar'])->name('togglesidebar'); // Généralement géré en JS côté client
 
     // Historique des actions
     Route::get('/history', [AdminController::class, 'viewHistory'])->name('history');
 
     // Gestion des communes
-    Route::prefix('communes')->name('communes.')->group(function () { // Ajout du name() au groupe
+    Route::prefix('communes')->name('communes.')->group(function () {
         Route::get('/', [CommuneAdminController::class, 'index'])->name('index');
         Route::get('/create', [CommuneAdminController::class, 'create'])->name('create');
         Route::post('/', [CommuneAdminController::class, 'store'])->name('store');
@@ -74,21 +76,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
 
     // Gestion des régions
-    Route::prefix('regions')->name('regions.')->group(function () { // Ajout du name() au groupe
+    Route::prefix('regions')->name('regions.')->group(function () {
         Route::get('/', [CommuneAdminController::class, 'regionsIndex'])->name('index');
         Route::get('/create', [CommuneAdminController::class, 'createRegion'])->name('create');
         Route::post('/', [CommuneAdminController::class, 'regionStore'])->name('store');
-        // Correction des routes PUT et DELETE pour utiliser un paramètre {region}
         Route::get('/{region}/edit', [CommuneAdminController::class, 'regionEdit'])->name('edit');
-        Route::put('/{region}', [CommuneAdminController::class, 'regionUpdate'])->name('update'); // {region} doit être l'identifiant unique de la région
-        Route::delete('/{region}', [CommuneAdminController::class, 'regionDestroy'])->name('destroy'); // {region} doit être l'identifiant unique de la région
+        Route::put('/{region}', [CommuneAdminController::class, 'regionUpdate'])->name('update');
+        Route::delete('/{region}', [CommuneAdminController::class, 'regionDestroy'])->name('destroy');
     });
 
     // Performances (Assumons que c'est une vue gérée par AdminController)
-    // Si 'admin.lieux.index' est la route pour les performances
     Route::get('/performances', [AdminController::class, 'showPerformances'])->name('performances');
-    // Ou si c'est lié à un contrôleur spécifique pour les lieux :
-    // Route::get('/lieux', [DepartementAdminController::class, 'index'])->name('lieux.index');
 });
 
 // --- Routes pour les agents municipaux ---
@@ -113,6 +111,8 @@ Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->grou
         Route::get('/{document}/duplicate', [DocumentAdminController::class, 'generateDuplicata'])->name('duplicata');
         // Correction du nom de la route et du paramètre pour le téléchargement des pièces jointes
         Route::get('/attachments/{attachment}/download', [DocumentAdminController::class, 'downloadAttachment'])->name('download.attachment');
+        Route::get('/settings', [DocumentAdminController::class, 'settings'])->name('settings'); // Si les agents ont aussi leurs propres settings
+
         // Simplification du nom de la route pour la création de duplicata
         Route::post('/{document}/create-duplicata', [DocumentAdminController::class, 'createDuplicata'])->name('create.duplicata');
 
@@ -123,32 +123,49 @@ Route::middleware(['auth', 'role:agent'])->prefix('agent')->name('agent.')->grou
     });
 });
 
-// // --- Routes pour les citoyens ---
-// Route::middleware(['auth', 'role:citoyen'])->prefix('citizen')->name('citizen.')->group(function () {
-//     // Tableau de bord citoyen
-//     Route::get('/dashboard', [CitizenController::class, 'dashboard'])->name('dashboard');
+// --- Routes pour les citoyens (désactivées dans votre code actuel) ---
+Route::middleware(['auth', 'role:citoyen'])->prefix('citoyen')->name('citoyen.')->group(function () {
+    // Tableau de bord citoyen
+    Route::get('/dashboard', [CitoyenController::class, 'dashboard'])->name('dashboard');
 
-//     // Demandes d'actes d'état civil en ligne
-//     Route::prefix('demandes')->name('demandes.')->group(function () {
-//         Route::get('/', [DocumentCitizenController::class, 'index'])->name('index'); // Lister les demandes du citoyen
-//         Route::get('/create/{type?}', [DocumentCitizenController::class, 'create'])->name('create'); // Formulaire de nouvelle demande (type d'acte optionnel)
-//         Route::post('/', [DocumentCitizenController::class, 'store'])->name('store'); // Soumettre la demande
-//         Route::get('/{document}', [DocumentCitizenController::class, 'show'])->name('show'); // Voir les détails d'une demande
-//         Route::get('/{document}/edit', [DocumentCitizenController::class, 'edit'])->name('edit'); // Modifier une demande (si statut le permet)
-//         Route::put('/{document}', [DocumentCitizenController::class, 'update'])->name('update'); // Mettre à jour une demande
-//         Route::delete('/{document}', [DocumentCitizenController::class, 'destroy'])->name('destroy'); // Annuler/Supprimer une demande
+    // Demandes d'actes d'état civil en ligne
+    Route::prefix('demandes')->name('demandes.')->group(function () {
+        Route::get('/', [CitoyenController::class, 'index'])->name('index'); // Lister les demandes du citoyen
+        Route::get('/create', [CitoyenController::class, 'create'])->name('create'); // Formulaire de nouvelle demande
+        Route::post('/', [CitoyenController::class, 'store'])->name('store'); // Soumettre la demande
+        Route::get('/{document}', [CitoyenController::class, 'show'])->name('show'); // Voir les détails d'une demande
+        Route::get('/{document}/edit', [CitoyenController::class, 'edit'])->name('edit'); // Modifier une demande (si statut le permet)
+        Route::put('/{document}', [CitoyenController::class, 'update'])->name('update'); // Mettre à jour une demande
+        Route::delete('/{document}', [CitoyenController::class, 'destroy'])->name('destroy'); // Annuler/Supprimer une demande
 
-//         // Paiement des frais de timbre en ligne
-//         Route::get('/{document}/pay', [DocumentCitizenController::class, 'showPaymentForm'])->name('pay');
-//         Route::post('/{document}/process-payment', [DocumentCitizenController::class, 'processPayment'])->name('process-payment');
+        // Routes pour les formulaires spécifiques
+        Route::get('/naissance', [CitoyenController::class, 'formNaissance'])->name('naissance');
+        Route::get('/mariage', [CitoyenController::class, 'formMariage'])->name('mariage');
+        Route::get('/deces', [CitoyenController::class, 'formDeces'])->name('deces');
+        Route::get('/certificat-vie', [CitoyenController::class, 'formVie'])->name('certificat-vie');
+        Route::get('/certificat-entretien', [CitoyenController::class, 'formEntretien'])->name('certificat-entretien');
+        Route::get('/certificat-revenu', [CitoyenController::class, 'formRevenu'])->name('certificat-revenu');
+        Route::get('/certificat-divorce', [CitoyenController::class, 'formDivorce'])->name('certificat-divorce');
 
-//         // Accès aux fichiers PDF signés numériquement
-//         Route::get('/{document}/download-pdf', [DocumentCitizenController::class, 'downloadSignedPdf'])->name('download-pdf');
-//     });
 
-//     // Accès à des statistiques publiques (si applicable)
-//     Route::get('/statistics', [CitizenController::class, 'showPublicStatistics'])->name('statistics');
-// });
+        // Paiement des frais de timbre en ligne
+        Route::get('/{document}/pay', [CitoyenController::class, 'showPaymentForm'])->name('pay');
+        Route::post('/{document}/process-payment', [CitoyenController::class, 'processPayment'])->name('process-payment');
+        Route::get('/{document}/payment-confirmation', [CitoyenController::class, 'showPaymentConfirmation'])->name('paiements.confirmation');
+
+        // Téléchargement d'un document (après paiement réussi)
+        Route::get('/{document}/download', [CitoyenController::class, 'download'])->name('download'); // Utilise la méthode download mise à jour
+
+        // Demande de duplicata
+        Route::post('/request-duplicata', [CitoyenController::class, 'requestDuplicata'])->name('request-duplicata'); // Utilise la méthode requestDuplicata
+
+
+    });
+
+    // Accès à des statistiques publiques (si applicable)
+    Route::get('/statistics', [CitoyenController::class, 'showPublicStatistics'])->name('statistics');
+});
+
 
 // --- Déconnexion personnalisée ---
 Route::post('/logout', function (Request $request) {
@@ -171,7 +188,7 @@ Route::fallback(function () {
     } elseif (Auth::user()->isAgent()) {
         return redirect()->route('agent.dashboard');
     } elseif (Auth::user()->isCitoyen()) {
-        return redirect()->route('citizen.dashboard');
+        return redirect()->route('citoyen.dashboard'); // Corrigé le nom de la route
     }
 
     // Fallback si le rôle n'est pas reconnu ou si l'utilisateur est connecté mais sans rôle défini

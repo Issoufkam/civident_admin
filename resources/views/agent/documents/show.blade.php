@@ -126,7 +126,7 @@
                                         <p class="fw-bold">{{ $document->created_at->format('d/m/Y H:i') }}</p>
                                     </div>
                                     <div class="col-sm-6 mb-2">
-                                        <p class="mb-1 text-muted">Dernière mise à jour</p>
+                                        <p class="mb-1 text-muted">Date de traitement</p>
                                         <p class="fw-bold">{{ $document->updated_at->format('d/m/Y H:i') }}</p>
                                     </div>
                                 </div>
@@ -179,10 +179,22 @@
                                             <p class="fw-bold">{{ $document->metadata['nom_epoux'] ?? 'Non renseigné' }}</p>
                                         </div>
                                         <div class="col-sm-6 mb-2">
-                                            <p class="mb-1 text-muted">Nom épouse</p>
-                                            <p class="fw-bold">{{ $document->metadata['nom_epouse'] ?? 'Non renseigné' }}</p>
+                                            <p class="mb-1 text-muted">Nationalité époux</p>
+                                            <p class="fw-bold">{{ $document->metadata['nationalite_epoux'] ?? 'Non renseignée' }}</p>
                                         </div>
-                                        <div class="col-12 mb-2">
+                                        <div class="col-sm-6 mb-2">
+                                            <p class="mb-1 text-muted">Nom épouse</p>
+                                            <p class="fw-bold">{{ $document->metadata['nom_epouse'] ?? 'Non renseignée' }}</p>
+                                        </div>
+                                        <div class="col-sm-6 mb-2">
+                                            <p class="mb-1 text-muted">Nationalité épouse</p>
+                                            <p class="fw-bold">{{ $document->metadata['nationalite_epouse'] ?? 'Non renseignée' }}</p>
+                                        </div>
+                                        <div class="col-sm-6 mb-2">
+                                            <p class="mb-1 text-muted">Lieu de mariage</p>
+                                            <p class="fw-bold">{{ $document->metadata['lieu_mariage'] ?? 'Non renseigné' }}</p>
+                                        </div>
+                                        <div class="col-sm-6 mb-2">
                                             <p class="mb-1 text-muted">Date du mariage</p>
                                             <p class="fw-bold">{{ $document->metadata['date_mariage'] ?? 'Non renseignée' }}</p>
                                         </div>
@@ -224,7 +236,6 @@
                         </div>
                     </div>
 
-                    ---
 
                     {{-- Documents joints --}}
                     <div class="detail-section mt-4">
@@ -439,6 +450,23 @@
                             Statut actuel: {{ $document->status->value }} - La section d'approbation ne s'affiche que pour les documents approuvés
                         </div>
                     @endif
+                    <div class="d-flex gap-1">
+                                        <a href="{{ route('agent.documents.edit', $document->id) }}" class="btn btn-sm btn-outline-secondary" title="Modifier le document">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <form action="{{ route('agent.documents.approve', $document->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir approuver ce document ?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success" title="Approuver le document">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                        </form>
+
+                                        <button type="button" class="btn btn-sm btn-danger" title="Rejeter le document"
+                                                data-bs-toggle="modal" data-bs-target="#rejectModal" data-document-id="{{ $document->id }}">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </div>
                 </div>
             </div>
         </div>
